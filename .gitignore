@@ -1,0 +1,11 @@
+node_modules
+output
+.DS_Store
+tmp
+custom
+.vscode/
+.env
+.yarn/**
+.yarn.lock
+.yarnrc
+nohup.out

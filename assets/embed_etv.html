@@ -1,0 +1,4435 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, maximum-scale=1.0, minimum-scale=1.0, initial-scale=1"
+    />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <script
+      async
+      src="https://cdn.ampproject.org/video-iframe-integration-v0.js"
+    ></script>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script
+      type="text/javascript"
+      src="https://etvbharatimages.akamaized.net/player/etvbharat-test/saranyu_player/plugin/sp1.js"
+    ></script>
+    <script
+      type="application/javascript"
+      src="https://players-saranyu.s3.amazonaws.com/etvbharat_staging/saranyu_player/plugin/external-js/scroll-playpause1.js"
+    ></script>
+
+    <title>Staging :: ETV Embed Player</title>
+    <!-- firebase & GTM changes 24-12-2019 12:00 -->
+    <!-- Google Tag Manager-360-->
+    <script>
+      (function(w, d, s, l, i) {
+        w[l] = w[l] || [];
+        w[l].push({ "gtm.start": new Date().getTime(), event: "gtm.js" });
+        var f = d.getElementsByTagName(s)[0],
+          j = d.createElement(s),
+          dl = l != "dataLayer" ? "&l=" + l : "";
+        j.async = true;
+        j.src = "https://www.googletagmanager.com/gtm.js?id=" + i + dl;
+        f.parentNode.insertBefore(j, f);
+      })(window, document, "script", "dataLayer", "GTM-K3BH7X9");
+    </script>
+    <!-- End Google Tag Manager-360 -->
+    <!-- Start comScore Tag -->
+    <script src="comScore.min.js" type="text/javascript"></script>
+    <style>
+      #video_player {
+        height: 100%;
+        width: 100%;
+        position: absolute;
+      }
+      .sp-player-inner .sp-player-layers .sp-player-poster {
+        position: absolute !important;
+        height: 132% !important;
+        width: 100% !important;
+        top: -40px !important;
+      }
+    </style>
+  </head>
+  <body
+    style="margin:0px;padding:0px;background-color: rgb(38,38,38); height: 100%; width: 100%; overflow: hidden;"
+  >
+    <!-- Google Tag Manager (noscript)-360 -->
+    <noscript
+      ><iframe
+        src="https://www.googletagmanager.com/ns.html?id=GTM-K3BH7X9"
+        height="0"
+        width="0"
+        style="display:none;visibility:hidden"
+      ></iframe
+    ></noscript>
+    <!-- End Google Tag Manager (noscript)-360 -->
+    <div id="video_player"></div>
+    <script>
+      var player_status = false;
+      var content_type;
+      var removeExtraString;
+      var checkContentType;
+      var ga_tracking;
+      var adurl;
+      var schedule;
+      var VOD_or_Live_Ads_Url_and_Shedule,
+        FirstMidRoll,
+        SecondMidRoll,
+        ThirdMidRoll,
+        Final_VOD_Live_ADs;
+      var comscorec3, comscorec3Filter;
+      var addAutoplay = false;
+      var addMute = false;
+      var contentFilter;
+      var ScrollFilter;
+      var notplayFilter;
+      var language, stateName, category, subcategory;
+      var languageFilter, stateNameFilter, categoryFilter, subcategoryFilter;
+      var thisCurrentTime;
+      var videoTitle, currentPageUrl, videoCity, videoDistrict, constituency;
+      var msiteUrlGTM =
+        window.location != window.parent.location
+          ? document.referrer
+          : document.location.hostname;
+      var isMsite = msiteUrlGTM.split("/")[2];
+      function convert_seconds_hh_mm_ss(sec) {
+        var hours = Math.floor(sec / 3600);
+        var min = Math.floor((sec - hours * 3600) / 60);
+        var seconds = Math.floor(sec % 60);
+        return hours + ":" + min + ":" + seconds;
+      }
+      function convert_hr_mm_ss_to_second(val) {
+        var sec = 0;
+        tt = val.split(":");
+        sec = tt[0] * 3600 + tt[1] * 60 + tt[2] * 1;
+        return sec;
+      }
+      window.onload = function() {
+        var contenturl = location.href;
+        res = contenturl.split("contenturl=");
+        play_url = res[1].split("&thumbnailurl=")[0].split("&")[0];
+        var disibleMouseIfNotplayTrue = $("#video_player");
+        var featuresEtv = [
+          "playpause",
+          "volume",
+          "time",
+          "progressbar",
+          "videotitle",
+          "eventcallbacks",
+          "fullscreen",
+          "qualityswitch",
+          "bigicons",
+          "advertisement",
+          "CurrentDuration"
+        ];
+        var duration_for_midroll_ads, duration_for_midroll_adsFilter;
+        // DURATION FOR MIDROLL ADS FOR VOD START
+        duration_for_midroll_ads = res[1].split("&video_duration=")[1];
+        if (duration_for_midroll_ads != undefined) {
+          duration_for_midroll_adsFilter = duration_for_midroll_ads.split(
+            "&"
+          )[0];
+          function vod_duration_urlEvent(duration_for_midroll_adsFilter) {
+            return duration_for_midroll_adsFilter;
+          }
+        }
+        // DURATION FOR MIDROLL ADS FOR VOD START
+        // EVENT ONLY FOR SELECTED CATAGEROY START
+        var ga_tracking_main = res[1].split("&ga_tracking=")[1];
+        if (ga_tracking_main != undefined) {
+          ga_tracking = ga_tracking_main.split("&")[0];
+          try {
+            sessionStorage.setItem("ga_tracking_code", ga_tracking);
+          } catch {
+            console.log("sessionStorage access denied");
+          }
+        }
+        // EVENT ONLY FOR SELECTED CATAGEROY END
+        //THUMBNAIL URL
+        var thumbnail_url;
+        var thumbnail_url_main = res[1].split("&thumbnailurl=")[1];
+        if (thumbnail_url_main != undefined) {
+          thumbnail_url = thumbnail_url_main.split("&")[0];
+        } else {
+          thumbnail_url =
+            "https://etvwinvideo.akamaized.net/etv-bharat/images/placeholder.png";
+        }
+        // THUMBNAIL URL END
+        // LANGUAGE, STATENAME, CATEGORY, SUBCAEGORY FOR GA START ===========
+        // LANGUAGE
+        language = res[1].split("&language=")[1];
+        if (language != undefined) {
+          languageFilter = language.split("&")[0];
+          try {
+            sessionStorage.setItem("VideoLanguage", languageFilter);
+          } catch {
+            console.log("Session Storage Access Denied");
+          }
+        }
+        // LANGUAGE END
+        // COMSCORE C3 VALUE START
+        comscorec3 = res[1].split("&comscorec3=")[1];
+        if (comscorec3 != undefined) {
+          comscorec3Filter = comscorec3.split("&")[0];
+        }
+        // COMSCORE C3 VALUE END
+        // STATENAME
+        stateName = res[1].split("&stateName=")[1];
+        if (stateName != undefined) {
+          stateNameFilter = stateName.split("&")[0];
+          try {
+            sessionStorage.setItem("VideoStateName", stateNameFilter);
+          } catch {
+            console.log("sessionStorage access denied");
+          }
+        }
+        // STATENAME END
+        // CATEGORY
+        category = res[1].split("&category=")[1];
+        if (category != undefined) {
+          categoryFilter = category.split("&")[0];
+          try {
+            sessionStorage.setItem("VideoCategory", categoryFilter);
+          } catch {
+            console.log("Session Storage Access Denied");
+          }
+        }
+        // CATEGORY END
+        // SUBCAEGORY
+        subcategory = res[1].split("&subcategory=")[1];
+        if (subcategory != undefined) {
+          subcategoryFilter = subcategory.split("&")[0];
+          try {
+            sessionStorage.setItem("VideoSubCategory", subcategoryFilter);
+          } catch {
+            console.log("Session Storage Access Denied");
+          }
+        }
+        // SUBCAEGORY END
+        // LANGUAGE, STATENAME, CATEGORY, SUBCAEGORY FOR GA END
+        //CONTENT ID FOR GA
+        var content_id = res[1].split("&content_id=")[1];
+        if (content_id == undefined) {
+        } else {
+          contentFilter = content_id.split("&")[0];
+          try {
+            sessionStorage.setItem("content_id", contentFilter);
+          } catch {
+            console.log("Session Storage Access Denied");
+          }
+        }
+        //CONTENT ID FOR GA END
+        var userAgent = navigator.userAgent || navigator.vendor || window.opera;
+        // CHECKING ITS LIVE CONTENT IF ITS LIVE SET DIFFENT FEATURES
+        // CHECKING IF ITS CONVERTED FROM LIVE TO VOD
+        content_type = res[1].split("&content_type=")[1];
+        if (content_type == undefined) {
+        } else {
+          if (content_type.length > 4) {
+            contentFilter = content_type.split("&")[0];
+          } else {
+            contentFilter = content_type;
+          }
+          if (contentFilter == "livestream" || contentFilter == "livesteam") {
+            isLive = res[1].split("is_live=")[1].split("&")[0];
+          } else {
+            isLive = undefined;
+          }
+          // ONLY isLive == FALSE, WILL EXECUTE THIS
+          if (
+            isLive == "false" &&
+            (contentFilter == "livestream" || contentFilter == "livesteam")
+          ) {
+            // MODIFICATION OF PLAY URL IF VIDEO IS LIVE TO VOD
+            url_chunk = res[1].split("&thumnail_url=")[0].split("&");
+            new_play_url = url_chunk[0] + "&" + url_chunk[1];
+            // REASSIGN PLAY URL
+            play_url = new_play_url;
+            // GETTING START TIME FOR LIVE TO VOD
+            start_time = res[1]
+              .split("start=")[1]
+              .split("&")[0]
+              .split("%")[0];
+            // GETTING END TIME FOR LIVE TO VOD
+            end_time = res[1]
+              .split("&end=")[1]
+              .split("&")[0]
+              .split("%")[0];
+            // CONVERSION OF START TIME & END TIME TO UNIX TIMESTAMP
+            StartToUnix = Date.parse(start_time);
+            EndToUnix = Date.parse(end_time);
+            //LIVE TO VOD GET VIDEO DURATION IN SECONDS
+            L2VoDDuration = (EndToUnix - StartToUnix) / 1000;
+            console.log("Stream Type: Live to VoD");
+            L2VoDDuration_HMS = convert_seconds_hh_mm_ss(L2VoDDuration);
+            console.log("Video Duration: " + L2VoDDuration_HMS);
+            checkContentType = "live2vod";
+            try {
+              localStorage.setItem("videoContentType", checkContentType);
+            } catch {
+              console.log("localStorage Access Denied");
+            }
+            vod_duration_urlFilter = L2VoDDuration;
+            featuresEtv = [
+              "playpause",
+              "volume",
+              "time",
+              "progressbar",
+              "videotitle",
+              "eventcallbacks",
+              "fullscreen",
+              "qualityswitch",
+              "bigicons",
+              "advertisement",
+              "CurrentDuration"
+            ];
+            if (/android/i.test(userAgent)) {
+              if (
+                navigator.userAgent.indexOf("Chrome") != -1 ||
+                navigator.userAgent.toLowerCase().indexOf("firefox") > -1
+              ) {
+                featuresEtv = [
+                  "playpause",
+                  "time",
+                  "progressbar",
+                  "videotitle",
+                  "eventcallbacks",
+                  "fullscreen",
+                  "qualityswitch",
+                  "volume",
+                  "bigicons",
+                  "advertisement",
+                  "CurrentDuration"
+                ];
+              }
+            }
+          } else if (
+            contentFilter == "live" ||
+            contentFilter == "livestream" ||
+            contentFilter == "livesteam"
+          ) {
+            checkContentType = "live";
+            try {
+              localStorage.setItem("videoContentType", checkContentType);
+            } catch {
+              console.log("Local Storage Access Denied");
+            }
+            featuresEtv = [
+              "playpause",
+              "volume",
+              "videotitle",
+              "eventcallbacks",
+              "fullscreen",
+              "qualityswitch",
+              "bigicons",
+              "advertisement",
+              "CurrentDuration"
+            ];
+            if (/android/i.test(userAgent)) {
+              if (
+                navigator.userAgent.indexOf("Chrome") != -1 ||
+                navigator.userAgent.toLowerCase().indexOf("firefox") > -1
+              ) {
+                featuresEtv = [
+                  "videotitle",
+                  "eventcallbacks",
+                  "fullscreen",
+                  "qualityswitch",
+                  "volume",
+                  "bigicons",
+                  "advertisement",
+                  "CurrentDuration"
+                ];
+              }
+            }
+          } else if (contentFilter == undefined) {
+            featuresEtv = [
+              "playpause",
+              "volume",
+              "time",
+              "progressbar",
+              "videotitle",
+              "eventcallbacks",
+              "fullscreen",
+              "qualityswitch",
+              "bigicons",
+              "advertisement",
+              "CurrentDuration"
+            ];
+          } else {
+            checkContentType = "nolive";
+            try {
+              localStorage.setItem("videoContentType", checkContentType);
+            } catch {
+              console.log("Local Storage Access Denied");
+            }
+            featuresEtv = [
+              "playpause",
+              "volume",
+              "time",
+              "progressbar",
+              "videotitle",
+              "eventcallbacks",
+              "fullscreen",
+              "qualityswitch",
+              "bigicons",
+              "advertisement",
+              "CurrentDuration"
+            ];
+            if (/android/i.test(userAgent)) {
+              if (
+                navigator.userAgent.indexOf("Chrome") != -1 ||
+                navigator.userAgent.toLowerCase().indexOf("firefox") > -1
+              ) {
+                featuresEtv = [
+                  "playpause",
+                  "time",
+                  "progressbar",
+                  "videotitle",
+                  "eventcallbacks",
+                  "fullscreen",
+                  "qualityswitch",
+                  "volume",
+                  "bigicons",
+                  "advertisement",
+                  "CurrentDuration"
+                ];
+              }
+            }
+          }
+        }
+        // CHECKING ITS LIVE CONTENT IF ITS LIVE SET DIFFENT FEATURES END
+        //AUTO-PLAY START
+        var autoplay = res[1].split("&autoplay=")[1];
+        if (undefined !== autoplay) {
+          autoplay = autoplay.split("&")[0];
+        }
+        if ("true" == autoplay) {
+          addAutoplay = true;
+        }
+        var mute = res[1].split("&mute=")[1].split("&")[0];
+        if (undefined != mute) {
+          mute = mute.split("&")[0];
+        }
+        if ("true" == mute) {
+          addMute = true;
+        }
+        //AUTO-PLAY END
+        //SCROLLPLAY FUNCTION START
+        var scrollply = res[1].split("&scrollply=")[1];
+        if (scrollply == undefined) {
+          setTimeout(function() {
+            addAutoplay = false;
+            addMute = false;
+          }, 100);
+        } else {
+          if (scrollply.length > 4) {
+            ScrollFilter = scrollply.split("&")[0];
+          } else {
+            ScrollFilter = scrollply;
+          }
+          if (ScrollFilter == "true") {
+            addAutoplay = true;
+            addMute = true;
+          } else if (ScrollFilter == "false") {
+            setTimeout(function() {
+              addAutoplay = false;
+              addMute = false;
+              pausePlayer();
+            }, 500);
+          } else {
+            addAutoplay = false;
+            addMute = false;
+            setTimeout(function() {
+              addAutoplay = false;
+              addMute = false;
+              pausePlayer();
+            }, 900);
+          }
+        }
+        // POSTROLL ADS FOR LIVE NEWS START //
+        var content_type_LIVE_ADS;
+        var contentFilter_LIVE_ADS;
+        var contenturl_LIVE_ADS = location.href;
+        var res1 = contenturl_LIVE_ADS.split("contenturl=");
+        content_type_LIVE_ADS = res1[1].split("&content_type=")[1];
+        //VOD OR LIVE STATUS START
+        if (content_type_LIVE_ADS != undefined) {
+          if (content_type_LIVE_ADS.length > 4) {
+            contentFilter_LIVE_ADS = content_type_LIVE_ADS.split("&")[0];
+          } else {
+            contentFilter_LIVE_ADS = content_type_LIVE_ADS;
+          }
+          if (contentFilter_LIVE_ADS == "live") {
+            var videoType_LIVE_ADS = "live";
+            function checkVideoStatusVODelseLive(videoType_LIVE_ADS) {
+              return videoType_LIVE_ADS;
+            }
+          } else {
+            var videoType_LIVE_ADS = "VOD";
+            function checkVideoStatusVODelseLive(videoType_LIVE_ADS) {
+              return videoType_LIVE_ADS;
+            }
+          }
+        } else {
+          var videoType_LIVE_ADS = "VOD";
+          function checkVideoStatusVODelseLive(videoType_LIVE_ADS) {
+            return videoType_LIVE_ADS;
+          }
+        }
+        var Result_VOD_or_Live_LIVE_ADS = checkVideoStatusVODelseLive(
+          videoType_LIVE_ADS
+        );
+        //VOD OR LIVE STATUS END
+        var VOD_OR_LIVE_CHECK = checkVideoStatusVODelseLive(videoType_LIVE_ADS);
+        if (VOD_OR_LIVE_CHECK == "live") {
+          var userAgent = window.navigator.userAgent.toLowerCase();
+          var mobileWebBrowser1 = /webview/.test(userAgent);
+          var mobileWebBrowser2 = /wv/.test(userAgent);
+          var android = /Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(
+            navigator.userAgent
+          );
+          var iosphone = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+          var is_iOS_Mobile = /(iPhone|iPod|iPad).*applewebkit(?!.*version)/i.test(
+            navigator.userAgent
+          );
+          var is_safari = /^((?!chrome|android).)*safari/i.test(
+            navigator.userAgent
+          );
+          if (mobileWebBrowser1 == true) {
+            Final_VOD_Live_ADs = [
+              {
+                adurl:
+                  "https://pubads.g.doubleclick.net/gampad/ads?iu=/21819361760/Test-MDOT-VAST-Preroll&description_url=[placeholder]&env=vp&impl=s&correlator=&tfcd=0&npa=0&gdfp_req=1&output=vast&sz=640x480&unviewed_position_start=1&ad_rule=0&vpos=preroll",
+                schedule: "preroll"
+              }
+            ];
+          } else if (mobileWebBrowser2 == true) {
+            Final_VOD_Live_ADs = [
+              {
+                adurl:
+                  "https://pubads.g.doubleclick.net/gampad/ads?iu=/21819361760/Test-MDOT-VAST-Preroll&description_url=[placeholder]&env=vp&impl=s&correlator=&tfcd=0&npa=0&gdfp_req=1&output=vast&sz=640x480&unviewed_position_start=1&ad_rule=0&vpos=preroll",
+                schedule: "preroll"
+              }
+            ];
+          } else if (android == true) {
+            Final_VOD_Live_ADs = [
+              {
+                adurl:
+                  "https://pubads.g.doubleclick.net/gampad/ads?iu=/21819361760/Test-MDOT-VAST-Preroll&description_url=[placeholder]&env=vp&impl=s&correlator=&tfcd=0&npa=0&gdfp_req=1&output=vast&sz=640x480&unviewed_position_start=1&ad_rule=0&vpos=preroll",
+                schedule: "preroll"
+              }
+            ];
+          } else if (iosphone == true) {
+          } else if (is_iOS_Mobile == true) {
+          } else if (is_safari == true) {
+            Final_VOD_Live_ADs = [
+              {
+                adurl:
+                  "https://pubads.g.doubleclick.net/gampad/ads?iu=/21819361760/Test-Desktop-VAST-Preroll&description_url=[placeholder]&env=vp&impl=s&correlator=&tfcd=0&npa=0&gdfp_req=1&output=vast&sz=640x480&unviewed_position_start=1&ad_rule=0&vpos=preroll",
+                schedule: "preroll"
+              }
+            ];
+          } else {
+            Final_VOD_Live_ADs = [
+              {
+                adurl:
+                  "https://pubads.g.doubleclick.net/gampad/ads?iu=/21819361760/Test-Desktop-VAST-Preroll&description_url=[placeholder]&env=vp&impl=s&correlator=&tfcd=0&npa=0&gdfp_req=1&output=vast&sz=640x480&unviewed_position_start=1&ad_rule=0&vpos=preroll",
+                schedule: "preroll"
+              }
+            ];
+          }
+        } else {
+          function FirstMidRoll() {
+            var Midroll_Ads_data = [
+              {
+                adurl:
+                  "https://pubads.g.doubleclick.net/gampad/ads?iu=/21819361760/ETB-TEST-Video-Midroll-1&description_url=[placeholder]&env=vp&impl=s&correlator=&tfcd=0&npa=0&gdfp_req=1&output=vast&sz=640x480&unviewed_position_start=1",
+                schedule: "180"
+              }
+            ];
+            return Midroll_Ads_data;
+          }
+          function SecondMidRoll() {
+            var Midroll_Ads_data = [
+              {
+                adurl:
+                  "https://pubads.g.doubleclick.net/gampad/ads?iu=/21819361760/ETB-TEST-Video-Midroll-1&description_url=[placeholder]&env=vp&impl=s&correlator=&tfcd=0&npa=0&gdfp_req=1&output=vast&sz=640x480&unviewed_position_start=1",
+                schedule: "180"
+              },
+              {
+                adurl:
+                  "https://pubads.g.doubleclick.net/gampad/ads?iu=/21819361760/ETB-TEST-Video-Midroll-2&description_url=[placeholder]&env=vp&impl=s&correlator=&tfcd=0&npa=0&gdfp_req=1&output=vast&sz=640x480&unviewed_position_start=1",
+                schedule: "420"
+              }
+            ];
+            return Midroll_Ads_data;
+          }
+          function ThirdMidRoll() {
+            var Midroll_Ads_data = [
+              {
+                adurl:
+                  "https://pubads.g.doubleclick.net/gampad/ads?iu=/21819361760/ETB-TEST-Video-Midroll-1&description_url=[placeholder]&env=vp&impl=s&correlator=&tfcd=0&npa=0&gdfp_req=1&output=vast&sz=640x480&unviewed_position_start=1",
+                schedule: "180"
+              },
+              {
+                adurl:
+                  "https://pubads.g.doubleclick.net/gampad/ads?iu=/21819361760/ETB-TEST-Video-Midroll-2&description_url=[placeholder]&env=vp&impl=s&correlator=&tfcd=0&npa=0&gdfp_req=1&output=vast&sz=640x480&unviewed_position_start=1",
+                schedule: "420"
+              },
+              {
+                adurl:
+                  "https://pubads.g.doubleclick.net/gampad/ads?iu=/21819361760/ETB-TEST-Video-Midroll-3&description_url=[placeholder]&env=vp&impl=s&correlator=&tfcd=0&npa=0&gdfp_req=1&output=vast&sz=640x480&unviewed_position_start=1",
+                schedule: "660"
+              }
+            ];
+            return Midroll_Ads_data;
+          }
+          function Post_Roll_Below_3mints_VOD() {
+            var Postroll_Ads_data = [
+              {
+                adurl:
+                  "https://pubads.g.doubleclick.net/gampad/ads?iu=/21819361760/Test-VAST-Postroll&description_url=[placeholder]&env=vp&impl=s&correlator=&tfcd=0&npa=0&gdfp_req=1&output=vast&sz=640x480&unviewed_position_start=1&ad_rule=0&vpos=postroll",
+                schedule: "postroll"
+              }
+            ];
+            return Postroll_Ads_data;
+          }
+          //MIDROLL FOR VOD START
+          if (duration_for_midroll_adsFilter >= 240) {
+            // 4 mints
+            if (duration_for_midroll_adsFilter >= 240) {
+              Final_VOD_Live_ADs = FirstMidRoll();
+            }
+            if (duration_for_midroll_adsFilter >= 540) {
+              // 9 mints
+              if (duration_for_midroll_adsFilter <= 540) {
+                Final_VOD_Live_ADs = SecondMidRoll();
+              }
+              if (duration_for_midroll_adsFilter >= 840) {
+                // 14 mints
+                Final_VOD_Live_ADs = ThirdMidRoll();
+              }
+            }
+          } else if (duration_for_midroll_adsFilter <= 180) {
+            if (duration_for_midroll_adsFilter >= 60) {
+              Final_VOD_Live_ADs = Post_Roll_Below_3mints_VOD();
+            }
+          } //MIDROLL FOR VOD END
+        } // END VOD
+        // POSTROLL ADS FOR LIVE NEWS END //
+        if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) {
+          $("#video_player").append(
+            '<video width="100%" height="100%" poster="' +
+              thumbnail_url +
+              '" src="' +
+              play_url +
+              '" controls></video>'
+          );
+          // ANALYTICS DATA START
+          var contenturl = location.href;
+          var res = contenturl.split("contenturl=");
+          var videotitle,
+            currentpageurl,
+            videocity,
+            videodistrict,
+            constituency,
+            content_id,
+            item_category,
+            item_sub_category,
+            content_type,
+            language,
+            state;
+          var videotitle_Filter,
+            currentpageurl_Filter,
+            videocity_Filter,
+            videodistrict_Filter,
+            constituency_Filter,
+            content_id_Filter,
+            item_category_Filter,
+            item_sub_category_Filter,
+            content_type_Filter,
+            language_Filter,
+            state_Filter;
+          videotitle = res[1].split("&videotitle=")[1];
+          if (videotitle != undefined) {
+            videotitle_Filter = decodeURI(
+              videotitle.split("&")[0].substr(0, 100)
+            );
+          }
+          currentpageurl = res[1].split("&currentpageurl=")[1];
+          if (currentpageurl != undefined) {
+            currentpageurl_Filter = currentpageurl.split("&")[0].substr(0, 100);
+          }
+          videocity = res[1].split("&videocity=")[1];
+          if (videocity != undefined) {
+            videocity_Filter = videocity.split("&")[0].substr(0, 100);
+          }
+          videodistrict = res[1].split("&videodistrict=")[1];
+          if (videodistrict != undefined) {
+            videodistrict_Filter = videodistrict.split("&")[0].substr(0, 100);
+          }
+          constituency = res[1].split("&constituency=")[1];
+          if (constituency != undefined) {
+            constituency_Filter = constituency.split("&")[0].substr(0, 100);
+          }
+          content_id = res[1].split("&content_id=")[1];
+          if (content_id != undefined) {
+            content_id_Filter = content_id.split("&")[0].substr(0, 100);
+          }
+          item_category = res[1].split("&category=")[1];
+          if (item_category != undefined) {
+            item_category_Filter = item_category.split("&")[0].substr(0, 100);
+          } else {
+          }
+          item_sub_category = res[1].split("&subcategory=")[1];
+          if (item_sub_category != undefined) {
+            item_sub_category_Filter = item_sub_category
+              .split("&")[0]
+              .substr(0, 100);
+          } else {
+          }
+          content_type = res[1].split("&content_type=")[1];
+          if (content_type != undefined) {
+            content_type_Filter = content_type.split("&")[0];
+          }
+          language = res[1].split("&language=")[1];
+          if (language != undefined) {
+            language_Filter = language.split("&")[0];
+          }
+          state = res[1].split("&stateName=")[1];
+          if (state != undefined) {
+            state_Filter = state.split("&")[0];
+          }
+          var isIosDeviceMsite = false;
+          var isIosDeviceMsite_inArticle = false;
+          var isIosDeviceMsite_Live = false;
+          var isIosDeviceMsite_LiveEvent = false;
+          var current;
+          var DurationToString;
+          $(function() {
+            var vid = $("#video_player").find("video"),
+              check,
+              reached25 = false,
+              reached50 = false,
+              reached75 = false,
+              reached99 = false;
+            //IOS VIDEO PLAY START
+            vid.bind("play", function(event) {
+              if (isIosDeviceMsite_inArticle == false) {
+                if (content_type_Filter == "inarticle") {
+                  // Google GTM 360 Start for iOS In Article
+                  window.dataLayer.push({
+                    event: "inarticle_start",
+                    item_id: content_id_Filter,
+                    item_name: videotitle_Filter,
+                    item_category: item_category_Filter,
+                    item_sub_category: item_sub_category_Filter,
+                    state: state_Filter,
+                    city: videocity_Filter,
+                    district: videodistrict_Filter,
+                    constituency: constituency_Filter,
+                    app_language: language_Filter,
+                    current_page_url: currentpageurl_Filter
+                  });
+                  // Google GTM 360 End
+                  window.dataLayer.push({
+                    event: "inarticle_duration",
+                    item_id: content_id_Filter,
+                    item_name: videotitle_Filter,
+                    item_category: item_category_Filter,
+                    item_sub_category: item_sub_category_Filter,
+                    state: state_Filter,
+                    city: videocity_Filter,
+                    district: videodistrict_Filter,
+                    constituency: constituency_Filter,
+                    app_language: language_Filter,
+                    current_page_url: currentpageurl_Filter,
+                    duration: current
+                  });
+                }
+                isIosDeviceMsite_inArticle = true;
+              }
+              if (isIosDeviceMsite == false) {
+                if (content_type_Filter == "vods") {
+                  // Google GTM 360 Start
+                  window.dataLayer.push({
+                    event: "vod_start",
+                    item_id: content_id_Filter,
+                    item_name: videotitle_Filter,
+                    item_category: item_category_Filter,
+                    item_sub_category: item_sub_category_Filter,
+                    state: state_Filter,
+                    city: videocity_Filter,
+                    district: videodistrict_Filter,
+                    constituency: constituency_Filter,
+                    app_language: language_Filter,
+                    current_page_url: currentpageurl_Filter
+                  });
+                  // Google GTM 360 End
+                  window.dataLayer.push({
+                    event: "vod_duration",
+                    item_id: content_id_Filter,
+                    item_name: videotitle_Filter,
+                    item_category: item_category_Filter,
+                    item_sub_category: item_sub_category_Filter,
+                    state: state_Filter,
+                    city: videocity_Filter,
+                    district: videodistrict_Filter,
+                    constituency: constituency_Filter,
+                    app_language: language_Filter,
+                    current_page_url: currentpageurl_Filter,
+                    duration: parseInt(current)
+                  });
+                }
+                isIosDeviceMsite = true;
+              }
+              if (isIosDeviceMsite_Live == false) {
+                if (content_type_Filter == "live") {
+                  // Google GTM 360 Start
+                  window.dataLayer.push({
+                    event: "newstime_start",
+                    item_id: content_id_Filter,
+                    item_name: videotitle_Filter,
+                    item_category: item_category_Filter,
+                    item_sub_category: item_sub_category_Filter,
+                    state: state_Filter,
+                    city: videocity_Filter,
+                    district: videodistrict_Filter,
+                    constituency: constituency_Filter,
+                    app_language: language_Filter,
+                    current_page_url: currentpageurl_Filter
+                  });
+                  // Google GTM 360 End
+                  window.dataLayer.push({
+                    event: "newstime_duration",
+                    item_id: content_id_Filter,
+                    item_name: videotitle_Filter,
+                    item_category: item_category_Filter,
+                    item_sub_category: item_sub_category_Filter,
+                    state: state_Filter,
+                    city: videocity_Filter,
+                    district: videodistrict_Filter,
+                    constituency: constituency_Filter,
+                    app_language: language_Filter,
+                    current_page_url: currentpageurl_Filter,
+                    duration: parseInt(current)
+                  });
+                }
+                isIosDeviceMsite_Live = true;
+              }
+              if (isIosDeviceMsite_LiveEvent == false) {
+                if (
+                  content_type_Filter == "livestream" ||
+                  content_type_Filter == "livesteam"
+                ) {
+                  // Google GTM 360 Start
+                  window.dataLayer.push({
+                    event: "liveevent_start",
+                    item_id: content_id_Filter,
+                    item_name: videotitle_Filter,
+                    item_category: item_category_Filter,
+                    item_sub_category: item_sub_category_Filter,
+                    state: state_Filter,
+                    city: videocity_Filter,
+                    district: videodistrict_Filter,
+                    constituency: constituency_Filter,
+                    app_language: language_Filter,
+                    current_page_url: currentpageurl_Filter
+                  });
+                  // Google GTM 360 End
+                  window.dataLayer.push({
+                    event: "liveevent_duration",
+                    item_id: content_id_Filter,
+                    item_name: videotitle_Filter,
+                    item_category: item_category_Filter,
+                    item_sub_category: item_sub_category_Filter,
+                    state: state_Filter,
+                    city: videocity_Filter,
+                    district: videodistrict_Filter,
+                    constituency: constituency_Filter,
+                    app_language: language_Filter,
+                    current_page_url: currentpageurl_Filter,
+                    duration: parseInt(current)
+                  });
+                }
+                isIosDeviceMsite_LiveEvent = true;
+              }
+              // Firebase start
+              function logEvent(name, params) {
+                if (!name) {
+                  return;
+                }
+                if (window.AnalyticsWebInterface) {
+                  // Call Android Interface
+                  window.AnalyticsWebInterface.logEvent(
+                    name,
+                    JSON.stringify(params)
+                  );
+                } else if (
+                  window.webkit &&
+                  window.webkit.messageHandlers &&
+                  window.webkit.messageHandlers.firebase
+                ) {
+                  // Call iOS interface
+                  var message = {
+                    command: "logEvent",
+                    name: name,
+                    parameters: params
+                  };
+                  window.webkit.messageHandlers.firebase.postMessage(message);
+                } else {
+                }
+              }
+              logEvent("inarticle_start", {
+                item_id: content_id_Filter,
+                item_name: videotitle_Filter,
+                item_category: item_category_Filter,
+                item_sub_category: item_sub_category_Filter,
+                state: state_Filter,
+                city: videocity_Filter,
+                district: videodistrict_Filter,
+                constituency: constituency_Filter,
+                app_language: language_Filter
+              });
+              // Firebase End
+              //IOS VIDEO PLAY EVENTS END
+              var duration = vid.get(0).duration;
+              check = setInterval(function() {
+                (current = vid.get(0).currentTime),
+                  (perc = ((current / duration) * 100).toFixed(2));
+                DurationToString = parseInt(current);
+                if (Math.floor(perc) >= 25 && !reached25) {
+                  if (content_type_Filter == "vods") {
+                    window.dataLayer.push({
+                      event: "vod_progress",
+                      video_view_percent: "25%",
+                      item_id: content_id_Filter,
+                      item_name: videotitle_Filter,
+                      item_category: item_category_Filter,
+                      item_sub_category: item_sub_category_Filter,
+                      state: state_Filter,
+                      city: videocity_Filter,
+                      district: videodistrict_Filter,
+                      constituency: constituency_Filter,
+                      app_language: language_Filter
+                    });
+                  } else if (content_type_Filter == "inarticle") {
+                    if (
+                      isMsite == "m.staging.etvbharat.com" ||
+                      isMsite == "m.etvbharat.com"
+                    ) {
+                      window.dataLayer.push({
+                        event: "vod_progress",
+                        video_view_percent: "25%",
+                        item_id: content_id_Filter,
+                        item_name: videotitle_Filter,
+                        item_category: item_category_Filter,
+                        item_sub_category: item_sub_category_Filter,
+                        state: state_Filter,
+                        city: videocity_Filter,
+                        district: videodistrict_Filter,
+                        constituency: constituency_Filter,
+                        app_language: language_Filter,
+                        current_page_url: currentpageurl_Filter
+                      });
+                    }
+                  }
+                  //IOS VIDEO 25% COMPLETED EVENTS START
+                  function iOSLogEventTwentyFive(name, params) {
+                    if (!name) {
+                      return;
+                    }
+                    if (window.AnalyticsWebInterface) {
+                      // Call Android interface
+                      window.AnalyticsWebInterface.logEvent(
+                        name,
+                        JSON.stringify(params)
+                      );
+                    } else if (
+                      window.webkit &&
+                      window.webkit.messageHandlers &&
+                      window.webkit.messageHandlers.firebase
+                    ) {
+                      // Call iOS Interface
+                      var message = {
+                        command: "logEvent",
+                        name: name,
+                        parameters: params
+                      };
+                      window.webkit.messageHandlers.firebase.postMessage(
+                        message
+                      );
+                    } else {
+                    }
+                  }
+                  iOSLogEventTwentyFive("inarticle_progress", {
+                    video_depth_percent: "25%",
+                    item_id: content_id_Filter,
+                    item_name: videotitle_Filter,
+                    item_category: item_category_Filter,
+                    item_sub_category: item_sub_category_Filter,
+                    state: state_Filter,
+                    city: videocity_Filter,
+                    district: videodistrict_Filter,
+                    constituency: constituency_Filter,
+                    app_language: language_Filter
+                  });
+                  //IOS VIDEO 25% COMPLETED EVENTS END
+                  reached25 = true;
+                } else if (Math.floor(perc) >= 50 && !reached50) {
+                  if (content_type_Filter == "vods") {
+                    window.dataLayer.push({
+                      event: "vod_progress",
+                      video_view_percent: "50%",
+                      item_id: content_id_Filter,
+                      item_name: videotitle_Filter,
+                      item_category: item_category_Filter,
+                      item_sub_category: item_sub_category_Filter,
+                      state: state_Filter,
+                      city: videocity_Filter,
+                      district: videodistrict_Filter,
+                      constituency: constituency_Filter,
+                      app_language: language_Filter,
+                      current_page_url: currentpageurl_Filter
+                    });
+                  } else if (content_type_Filter == "inarticle") {
+                    if (
+                      isMsite == "m.staging.etvbharat.com" ||
+                      isMsite == "m.etvbharat.com"
+                    ) {
+                      window.dataLayer.push({
+                        event: "vod_progress",
+                        video_view_percent: "50%",
+                        item_id: content_id_Filter,
+                        item_name: videotitle_Filter,
+                        item_category: item_category_Filter,
+                        item_sub_category: item_sub_category_Filter,
+                        state: state_Filter,
+                        city: videocity_Filter,
+                        district: videodistrict_Filter,
+                        constituency: constituency_Filter,
+                        app_language: language_Filter,
+                        current_page_url: currentpageurl_Filter
+                      });
+                    }
+                  }
+                  //IOS VIDEO 50% COMPLETED EVENTS START
+                  function iOSLogEventFifty(name, params) {
+                    if (!name) {
+                      return;
+                    }
+                    if (window.AnalyticsWebInterface) {
+                      // Call Android Interface
+                      window.AnalyticsWebInterface.logEvent(
+                        name,
+                        JSON.stringify(params)
+                      );
+                    } else if (
+                      window.webkit &&
+                      window.webkit.messageHandlers &&
+                      window.webkit.messageHandlers.firebase
+                    ) {
+                      // Call iOS Interface
+                      var message = {
+                        command: "logEvent",
+                        name: name,
+                        parameters: params
+                      };
+                      window.webkit.messageHandlers.firebase.postMessage(
+                        message
+                      );
+                    } else {
+                    }
+                  }
+                  iOSLogEventFifty("inarticle_progress", {
+                    video_depth_percent: "50%",
+                    item_id: content_id_Filter,
+                    item_name: videotitle_Filter,
+                    item_category: item_category_Filter,
+                    item_sub_category: item_sub_category_Filter,
+                    state: state_Filter,
+                    city: videocity_Filter,
+                    district: videodistrict_Filter,
+                    constituency: constituency_Filter,
+                    app_language: language_Filter
+                  });
+                  //IOS VIDEO 50% COMPLETED EVENTS END
+                  reached50 = true;
+                } else if (Math.floor(perc) >= 75 && !reached75) {
+                  if (content_type_Filter == "vods") {
+                    window.dataLayer.push({
+                      event: "vod_progress",
+                      video_view_percent: "75%",
+                      item_id: content_id_Filter,
+                      item_name: videotitle_Filter,
+                      item_category: item_category_Filter,
+                      item_sub_category: item_sub_category_Filter,
+                      state: state_Filter,
+                      city: videocity_Filter,
+                      district: videodistrict_Filter,
+                      constituency: constituency_Filter,
+                      app_language: language_Filter,
+                      current_page_url: currentpageurl_Filter
+                    });
+                  } else if (content_type_Filter == "inarticle") {
+                    if (
+                      isMsite == "m.staging.etvbharat.com" ||
+                      isMsite == "m.etvbharat.com"
+                    ) {
+                      window.dataLayer.push({
+                        event: "vod_progress",
+                        video_view_percent: "75%",
+                        item_id: content_id_Filter,
+                        item_name: videotitle_Filter,
+                        item_category: item_category_Filter,
+                        item_sub_category: item_sub_category_Filter,
+                        state: state_Filter,
+                        city: videocity_Filter,
+                        district: videodistrict_Filter,
+                        constituency: constituency_Filter,
+                        app_language: language_Filter,
+                        current_page_url: currentpageurl_Filter
+                      });
+                    }
+                  }
+                  //IOS VIDEO 75% COMPLETED EVENTS START
+                  function iOSLogEventSeventyFive(name, params) {
+                    if (!name) {
+                      return;
+                    }
+                    if (window.AnalyticsWebInterface) {
+                      // Call Android Interface
+                      window.AnalyticsWebInterface.logEvent(
+                        name,
+                        JSON.stringify(params)
+                      );
+                    } else if (
+                      window.webkit &&
+                      window.webkit.messageHandlers &&
+                      window.webkit.messageHandlers.firebase
+                    ) {
+                      // Call iOS Interface
+                      var message = {
+                        command: "logEvent",
+                        name: name,
+                        parameters: params
+                      };
+                      window.webkit.messageHandlers.firebase.postMessage(
+                        message
+                      );
+                    } else {
+                    }
+                  }
+                  iOSLogEventSeventyFive("inarticle_progress", {
+                    video_depth_percent: "75%",
+                    item_id: content_id_Filter,
+                    item_name: videotitle_Filter,
+                    item_category: item_category_Filter,
+                    item_sub_category: item_sub_category_Filter,
+                    state: state_Filter,
+                    city: videocity_Filter,
+                    district: videodistrict_Filter,
+                    constituency: constituency_Filter,
+                    app_language: language_Filter
+                  });
+                  //IOS VIDEO 75% COMPLETED EVENTS END
+                  reached75 = true;
+                } else if (Math.floor(perc) >= 99 && !reached99) {
+                  function iOSLogEventSeventyFive(name, params) {
+                    if (!name) {
+                      return;
+                    }
+                    if (window.AnalyticsWebInterface) {
+                      // Call Android Interface
+                      window.AnalyticsWebInterface.logEvent(
+                        name,
+                        JSON.stringify(params)
+                      );
+                    } else if (
+                      window.webkit &&
+                      window.webkit.messageHandlers &&
+                      window.webkit.messageHandlers.firebase
+                    ) {
+                      // Call iOS interface
+                      var message = {
+                        command: "logEvent",
+                        name: name,
+                        parameters: params
+                      };
+                      window.webkit.messageHandlers.firebase.postMessage(
+                        message
+                      );
+                    } else {
+                    }
+                  }
+                  iOSLogEventSeventyFive("inarticle_duration", {
+                    item_id: content_id_Filter,
+                    item_name: videotitle_Filter,
+                    item_category: item_category_Filter,
+                    item_sub_category: item_sub_category_Filter,
+                    state: state_Filter,
+                    city: videocity_Filter,
+                    district: videodistrict_Filter,
+                    constituency: constituency_Filter,
+                    app_language: language_Filter,
+                    duration: DurationToString
+                  });
+                  reached99 = true;
+                }
+              }, 1000);
+            });
+            // iOS Backbutton start
+            var iosPostMsg = false;
+            var iosMsgPause = false;
+            window.addEventListener("message", IosPostMgsRecive, false);
+            function IosPostMgsRecive(e) {
+              if (e.origin == "*") {
+                return;
+              } else {
+                if (iosPostMsg == false) {
+                  if (e.data == "iosBckBtn") {
+                    IOSBackButtonClick("inarticle_duration", {
+                      duration: DurationToString,
+                      item_id: content_id_Filter,
+                      item_name: videotitle_Filter,
+                      item_category: item_category_Filter,
+                      item_sub_category: item_sub_category_Filter,
+                      state: state_Filter,
+                      city: videocity_Filter,
+                      district: videodistrict_Filter,
+                      constituency: constituency_Filter,
+                      app_language: language_Filter
+                    });
+                    iosPostMsg = true;
+                  }
+                }
+              }
+            }
+            function IOSBackButtonClick(name, params) {
+              if (!name) {
+                return;
+              }
+              if (window.AnalyticsWebInterface) {
+                // Call Android Interface
+                window.AnalyticsWebInterface.logEvent(
+                  name,
+                  JSON.stringify(params)
+                );
+              } else if (
+                window.webkit &&
+                window.webkit.messageHandlers &&
+                window.webkit.messageHandlers.firebase
+              ) {
+                // Call iOS Interface
+                var message = {
+                  command: "logEvent",
+                  name: name,
+                  parameters: params
+                };
+                window.webkit.messageHandlers.firebase.postMessage(message);
+              } else {
+              }
+            }
+            vid.bind("ended", function(event) {
+              clearInterval(check);
+              function iOSLogEventSeventyFive(name, params) {
+                if (!name) {
+                  return;
+                }
+                if (window.AnalyticsWebInterface) {
+                  // Call Android Interface
+                  window.AnalyticsWebInterface.logEvent(
+                    name,
+                    JSON.stringify(params)
+                  );
+                } else if (
+                  window.webkit &&
+                  window.webkit.messageHandlers &&
+                  window.webkit.messageHandlers.firebase
+                ) {
+                  // Call iOS interface
+                  var message = {
+                    command: "logEvent",
+                    name: name,
+                    parameters: params
+                  };
+                  window.webkit.messageHandlers.firebase.postMessage(message);
+                } else {
+                }
+              }
+              iOSLogEventSeventyFive("inarticle_complete", {
+                item_id: content_id_Filter,
+                item_name: videotitle_Filter,
+                item_category: item_category_Filter,
+                item_sub_category: item_sub_category_Filter,
+                state: state_Filter,
+                city: videocity_Filter,
+                district: videodistrict_Filter,
+                constituency: constituency_Filter,
+                app_language: language_Filter
+              });
+            });
+            vid.onended = function() {
+              clearInterval(check);
+              if (content_type_Filter == "vods") {
+                // Google GTM 360 Start
+                window.dataLayer.push({
+                  event: "vod_complete",
+                  item_id: content_id_Filter,
+                  item_name: videotitle_Filter,
+                  item_category: item_category_Filter,
+                  item_sub_category: item_sub_category_Filter,
+                  state: state_Filter,
+                  city: videocity_Filter,
+                  district: videodistrict_Filter,
+                  constituency: constituency_Filter,
+                  app_language: language_Filter,
+                  current_page_url: currentpageurl_Filter
+                });
+                window.dataLayer.push({
+                  event: "vod_duration",
+                  item_id: content_id_Filter,
+                  item_name: videotitle_Filter,
+                  item_category: item_category_Filter,
+                  item_sub_category: item_sub_category_Filter,
+                  state: state_Filter,
+                  city: videocity_Filter,
+                  district: videodistrict_Filter,
+                  constituency: constituency_Filter,
+                  app_language: language_Filter,
+                  current_page_url: currentpageurl_Filter,
+                  duration: parseInt(current)
+                });
+                // Google GTM 360 End
+              } else if (content_type_Filter == "inarticle") {
+                // Google GTM 360 Start
+                setTimeout(function() {
+                  window.dataLayer.push({
+                    event: "inarticle_complete",
+                    item_id: content_id_Filter,
+                    item_name: videotitle_Filter,
+                    item_category: item_category_Filter,
+                    item_sub_category: item_sub_category_Filter,
+                    state: state_Filter,
+                    city: videocity_Filter,
+                    district: videodistrict_Filter,
+                    constituency: constituency_Filter,
+                    app_language: language_Filter,
+                    current_page_url: currentpageurl_Filter
+                  });
+                }, 200);
+                window.dataLayer.push({
+                  event: "inarticle_duration",
+                  item_id: content_id_Filter,
+                  item_name: videotitle_Filter,
+                  item_category: item_category_Filter,
+                  item_sub_category: item_sub_category_Filter,
+                  state: state_Filter,
+                  city: videocity_Filter,
+                  district: videodistrict_Filter,
+                  constituency: constituency_Filter,
+                  app_language: language_Filter,
+                  current_page_url: currentpageurl_Filter,
+                  duration: parseInt(current)
+                });
+                // Google GTM 360 End
+              }
+            };
+          });
+          // IOS CUSTOME EVENTS FOR FIREBASE END
+        } else {
+          var playerObject = new saranyuplayer("hls", "#video_player", {
+            licence:
+              "6BdgYyHxsYkXNCViMFM1+RZy9RNs2YO9Xe7ATbcHakqLzZzSAqxou+Iz51R1%0AbjMo655ZwM58\/oaZcSQ5fHkgqeqHW1C+pLEUFFN+qlI3ZgM=%0A",
+            type: "video",
+            content: "vod",
+            file: [
+              {
+                content_url: play_url,
+                label: "Auto",
+                mediaid: "123",
+                poster: thumbnail_url,
+                videotitle: "",
+                thumbnails: ""
+              }
+            ],
+            autoplay: addAutoplay,
+            mute: addMute,
+            advertisement: {
+              cues: true,
+              adsets: Final_VOD_Live_ADs
+            },
+            poster: thumbnail_url,
+            hideControlsWhenInactive: "true",
+            qualityswitch: {
+              label: "Auto",
+              metric: "resolution"
+            },
+            features: featuresEtv
+          });
+        }
+      };
+      setInterval(function() {
+        try {
+          if (window.matchMedia("(orientation: portrait)").matches) {
+            $("#video_player1").width("100%");
+            $("#video_player1").height(window.innerHeight - 0.1);
+          } else if (window.matchMedia("(orientation: landscape)").matches) {
+            $("#video_player1").width("100%");
+            $("#video_player1").height(window.innerHeight - 0.1);
+          } else {
+            $("#video_player1").width("100%");
+            $("#video_player1").height(window.innerHeight - 0.1);
+          }
+        } catch (e) {}
+      }, 1000);
+      function pausePlayer() {
+        hlsPlayer._videoPlayerControls("pause");
+      }
+      function playPlayer() {
+        hlsPlayer._videoPlayerControls("play");
+      }
+      function seekPlayer(val) {
+        hlsPlayer._videoPlayerControls("seek", val);
+      }
+      function getcurrentTime() {
+        return hlsPlayer._getCurrentTime();
+      }
+      function getTotalDuration() {
+        return hlsPlayer._getTotalDuration();
+      }
+      // App Back Button Start
+      var androidPostMsg = false;
+      var androidPostPause = false;
+      window.addEventListener("message", AppBackBtnIosAndroid, false);
+      function AppBackBtnIosAndroid(e) {
+        if (e.origin == "*") {
+          return;
+        } else {
+          if (androidPostMsg == false) {
+            if (e.data == "InarticleAppBckBtnClk") {
+              pausePlayer();
+              androidPostMsg = true;
+              androidPostPause = true;
+            }
+          }
+        }
+      }
+      //App Backbutton End
+      // COMSCORE START //
+      //CONTAINT STATUS LIVE OR VOD START
+      var content_type1;
+      var contentFilter1;
+      var contenturl1 = location.href;
+      var res1 = contenturl1.split("contenturl=");
+      content_type1 = res1[1].split("&content_type=")[1];
+      var vod_duration_url, vod_duration_urlFilter;
+      // DURATION START
+      vod_duration_url = res1[1].split("&video_duration=")[1];
+      if (vod_duration_url != undefined) {
+        vod_duration_urlFilter = vod_duration_url.split("&")[0];
+        function vod_duration_urlEvent(vod_duration_urlFilter) {
+          return vod_duration_urlFilter;
+        }
+      }
+      // DURATION END
+      // GA EVENTS ONLY FOR TRACKING IS TRUE START
+      var GA_Url_Value = res1[1].split("&ga_tracking=")[1];
+      if (GA_Url_Value != undefined) {
+        GA_final_value = GA_Url_Value.split("&")[0];
+        if (GA_final_value == "true") {
+          var GA_TRACK_START = "true";
+          function checkVideoStatusVODelseLive(GA_TRACK_START) {
+            return GA_TRACK_START;
+          }
+        }
+      }
+      // GA EVENTS ONLY FOR TRACKING IS TRUE END
+      //VOD OR LIVE STATUS START
+      if (content_type1 != undefined) {
+        if (content_type1.length > 4) {
+          contentFilter1 = content_type1.split("&")[0];
+        } else {
+          contentFilter1 = content_type1;
+        }
+        if (contentFilter1 == "live") {
+          var videoType = "live";
+          function checkVideoStatusVODelseLive(videoType) {
+            return videoType;
+          }
+        } else if (
+          contentFilter1 == "livestream" ||
+          contentFilter1 == "livesteam"
+        ) {
+          var videoType = "livestream";
+          function checkVideoStatusVODelseLive(videoType) {
+            return videoType;
+          }
+        } else {
+          var videoType = "VOD";
+          function checkVideoStatusVODelseLive(videoType) {
+            return videoType;
+          }
+        }
+      } else {
+        var videoType = "VOD";
+        function checkVideoStatusVODelseLive(videoType) {
+          return videoType;
+        }
+      }
+      var Result_VOD_or_Live = checkVideoStatusVODelseLive(videoType);
+      //VOD OR LIVE STATUS END
+      var VOD_OR_LIVE = checkVideoStatusVODelseLive(videoType);
+      if (VOD_OR_LIVE == "live") {
+        //NewsTime Scroll Down Up Start
+        window.addEventListener("message", receiver, false);
+        function receiver(e) {
+          if (e.origin == "*") {
+            return;
+          } else {
+            if (e.data == "SPNewsTimePlay") {
+              playPlayer();
+            } else if (e.data == "SPNewsTimePause") {
+              pausePlayer();
+            }
+          }
+        }
+        //NewsTime Scroll Down Up End
+
+        //NewsTime UserMoveAway start
+        var NewsTimeUserMoveAway = false;
+        window.addEventListener("message", receiverNewsTimeMSg, false);
+        function receiverNewsTimeMSg(e) {
+          if (e.origin == "*") {
+            return;
+          } else {
+            // console.log(e.data + " SPNewsTimePlay*****");
+            if (e.data == "UserMoveAwayPause") {
+              // console.log("UserMoveAwayPause Pause Send Duraiton UserNavigateAway");
+              NewsTimeUserMoveAway = true;
+              // pausePlayer();
+            }
+          }
+        }
+        //NewsTime UserMoveAway start
+
+        //keep it
+        function saranyCurrentVideoDuration() {}
+        //GTM EVENTS DATA START
+        var contenturl = location.href;
+        var res = contenturl.split("contenturl=");
+        var checkUnmuted = false;
+        var videotitle,
+          currentpageurl,
+          videocity,
+          videodistrict,
+          constituency,
+          content_id,
+          item_category,
+          item_sub_category,
+          content_type,
+          language,
+          state;
+        var videotitle_Filter,
+          currentpageurl_Filter,
+          videocity_Filter,
+          videodistrict_Filter,
+          constituency_Filter,
+          content_id_Filter,
+          item_category_Filter,
+          item_sub_category_Filter,
+          content_type_Filter,
+          language_Filter,
+          state_Filter;
+
+        // videotitle start
+        videotitle = res[1].split("&videotitle=")[1];
+        if (videotitle != undefined) {
+          videotitle_Filter = decodeURI(videotitle.split("&")[0]);
+          //console.log(videotitle_Filter + " LiveNews videotitle 1");
+        }
+        // videotitle end
+
+        // currentpageurl start
+        currentpageurl = res[1].split("&currentpageurl=")[1];
+        if (currentpageurl != undefined) {
+          currentpageurl_Filter = currentpageurl.split("&")[0];
+          //console.log(currentpageurl_Filter + " LiveNews currentpageurl 2");
+        }
+        // currentpageurl end
+
+        // videocity start
+        videocity = res[1].split("&videocity=")[1];
+        if (videocity != undefined) {
+          videocity_Filter = videocity.split("&")[0];
+          //console.log(videocity_Filter + " LiveNews videocity 3");
+        }
+        // videocity end
+
+        // videodistrict start
+        videodistrict = res[1].split("&videodistrict=")[1];
+        if (videodistrict != undefined) {
+          videodistrict_Filter = videodistrict.split("&")[0];
+          //console.log(videodistrict_Filter + " LiveNews videodistrict 4");
+        }
+        // videodistrict end
+
+        // constituency start
+        constituency = res[1].split("&constituency=")[1];
+        if (constituency != undefined) {
+          constituency_Filter = constituency.split("&")[0];
+          //console.log(constituency_Filter + " LiveNews constituency 5");
+        }
+        // constituency end
+
+        // content_id start
+        content_id = res[1].split("&content_id=")[1];
+        if (content_id != undefined) {
+          content_id_Filter = content_id.split("&")[0];
+          //console.log(content_id_Filter + " LiveNews content_id 6");
+        }
+        // content_id end
+
+        // item_category start
+        item_category = res[1].split("&category=")[1];
+        if (item_category != undefined) {
+          item_category_Filter = item_category.split("&")[0];
+          //console.log(item_category_Filter + " LiveNews item_category 7");
+        } else {
+          item_category_Filter = "INDIA";
+          //console.log(item_category_Filter + "Error LiveNews item_category 7");
+        }
+        // item_category end
+
+        // item_sub_category start
+        item_sub_category = res[1].split("&subcategory=")[1];
+        if (item_sub_category != undefined) {
+          item_sub_category_Filter = item_sub_category.split("&")[0];
+          //console.log(item_sub_category_Filter + " LiveNews item_sub_category_Filter 8");
+        } else {
+          item_sub_category_Filter = "INDIA";
+          //console.log(item_sub_category_Filter + "Error LiveNews item_sub_category_Filter 8");
+        }
+        // item_sub_category end
+
+        // content_type start
+        content_type = res[1].split("&content_type=")[1];
+        if (content_type != undefined) {
+          content_type_Filter = content_type.split("&")[0];
+          //console.log(content_type_Filter + " LiveNews content_type 9");
+        }
+        // videotitle end
+
+        // language start
+        language = res[1].split("&language=")[1];
+        if (language != undefined) {
+          language_Filter = language.split("&")[0];
+          //console.log(language_Filter + " LiveNews language 10");
+        }
+        // language end
+
+        // state start
+        state = res[1].split("&stateName=")[1];
+        if (state != undefined) {
+          state_Filter = state.split("&")[0];
+          //console.log(state_Filter + " LiveNews language 11");
+        }
+        // language end
+
+        //GTM EVENTS DATA END
+
+        var passDuration, Live_Ads_durtion;
+        //console.log("Live");
+        //LIVE DURATION CHECK START
+        //console.log("live");
+        var itsplaying, Live_duration;
+
+        function videoDurationsFn() {
+          hlsPlayer.eventcallbacks.onPlay = function(
+            presentTime,
+            duration,
+            mediaId
+          ) {
+            itsplaying = "true";
+            if (itsplaying == "true") {
+              setTimeout(function() {
+                Live_duration = hlsPlayer.mediaElement.videoElement.duration;
+                Is_duration();
+              }, 500);
+            }
+          };
+        }
+
+        var IsUnmutedOnlyTime = false;
+
+        function Is_duration() {}
+        //LIVE DURATION CHECK END
+        //LIVE VIDEO CONTENT
+        // New instance created for Live
+        var streamingAnalytics = new ns_.ReducedRequirementsStreamingAnalytics({
+          publisherId: "20416623"
+        });
+        //COMSCORE FUNCTION START  ==========================
+        function comscrorePlayStart(metadata) {
+          //console.log("comscore start");
+          streamingAnalytics.playVideoContentPart(
+            metadata,
+            ns_.ReducedRequirementsStreamingAnalytics.ContentType.Live
+          );
+        }
+
+        function comScoreStop() {
+          //console.log("comscore stop");
+          streamingAnalytics.stop();
+        }
+        //Live Ads duraiton start
+        function getAdsDuration(passDuration) {
+          Live_Ads_durtion = passDuration;
+        }
+        //Live Ads duraiton end
+        function comScoreAdsStart() {
+          streamingAnalytics.playVideoAdvertisement(
+            {
+              ns_st_cl: Live_Ads_durtion * 1000
+            },
+            ns_.ReducedRequirementsStreamingAnalytics.AdType
+              .LinearOnDemandMidRoll
+          );
+        }
+        //ADS STATUS
+        function AdsEventCallBacks(imgAdStatu) {
+          if (imgAdStatu == "STARTED") {
+            comScoreAdsStart();
+          } else if (imgAdStatu == "COMPLETE") {
+            comScoreStop();
+            sessionStorage.clear("isDuration");
+            hlsPlayer._videoPlayerControls("play");
+          } else if (imgAdStatu == "PAUSE") {
+          } else if (imgAdStatu == "RESUMED") {
+          } else if (imgAdStatu == "LOADED") {
+            comScoreStop();
+          }
+        }
+        // COMSCORE VIDEO EVENTS END
+
+        var LiveEvntTimerCounter;
+        var LiveDurationCalc = 0;
+        var LiveEvntResumed = false;
+
+        function CounterTimerLiveEvnt() {
+          ++LiveDurationCalc;
+          // console.log(LiveDurationCalc + " timeischeck ");
+        }
+
+        function StopLiveEvntTimerCounter() {
+          clearInterval(LiveEvntTimerCounter);
+        }
+
+        function createEventCallBacks() {
+          hlsPlayer.eventcallbacks.onPlay = function(
+            presentTime,
+            duration,
+            mediaId
+          ) {
+            // console.log("play");
+            player_status = "playing";
+            var metadata = {
+              c2: 20416623,
+              c3: comscorec3Filter,
+              c4: "*null",
+              c6: "*null",
+              ns_st_ci: 13784,
+              ns_st_cl: "0",
+              ns_st_pu: "etv news",
+              ns_st_pr: "live news",
+              ns_st_tpr: 53617155,
+              ns_st_ep: "Bulletin",
+              ns_st_tep: 53617155,
+              ns_st_ge: "news",
+              ns_st_st: "ETV Bharat",
+              ns_st_ce: 1,
+              ns_st_ia: "*null",
+              ns_st_ddt: "*null",
+              ns_st_tdt: "*null"
+            };
+            comscrorePlayStart(metadata);
+          };
+
+          hlsPlayer.eventcallbacks.onPause = function(
+            presentTime,
+            duration,
+            mediaId
+          ) {
+            player_status = "pause";
+            // console.log("pause");
+
+            if (NewsTimeUserMoveAway == true) {
+              window.dataLayer.push({
+                event: "newstime_durationUserNavigate",
+                item_id: content_id_Filter, //video id
+                item_name: videotitle_Filter, //video title
+                item_category: item_category_Filter, //category of the article
+                item_sub_category: item_sub_category_Filter, //sub-category of the article, default = "INDIA"
+                state: state_Filter, //state which is selected by the user, default = "INDIA"
+                city: videocity_Filter, //city which is selected by the user, default = "INDIA"
+                district: videodistrict_Filter, //district of the article, default = "INDIA"
+                constituency: constituency_Filter, //constituency of the article, default = "INDIA"
+                app_language: language_Filter, //language selected by the user, default = "ENGLISH"
+                current_page_url: currentpageurl_Filter, //url of the current  // full path? we wil nt get need new
+                duration: parseInt(presentTime)
+              });
+            }
+
+            function userScrollDownOrNavigateToAway() {
+              window.dataLayer.push({
+                event: "newstime_duration",
+                item_id: content_id_Filter, //video id
+                item_name: videotitle_Filter, //video title
+                item_category: item_category_Filter, //category of the article
+                item_sub_category: item_sub_category_Filter, //sub-category of the article, default = "INDIA"
+                state: state_Filter, //state which is selected by the user, default = "INDIA"
+                city: videocity_Filter, //city which is selected by the user, default = "INDIA"
+                district: videodistrict_Filter, //district of the article, default = "INDIA"
+                constituency: constituency_Filter, //constituency of the article, default = "INDIA"
+                app_language: language_Filter, //language selected by the user, default = "ENGLISH"
+                current_page_url: currentpageurl_Filter, //url of the current  // full path? we wil nt get need new
+                duration: presentTime
+              });
+            }
+            StopLiveEvntTimerCounter();
+            // console.log(LiveDurationCalc + " timeischeck ");
+            comScoreStop();
+
+            if (LiveEvntResumed == true) {
+              if (VOD_OR_LIVE == "live") {
+                if (checkUnmuted == true) {
+                  window.dataLayer.push({
+                    event: "newstime_duration",
+                    item_id: content_id_Filter, //video id
+                    item_name: videotitle_Filter, //video title
+                    item_category: item_category_Filter, //category of the article
+                    item_sub_category: item_sub_category_Filter, //sub-category of the article, default = "INDIA"
+                    state: state_Filter, //state which is selected by the user, default = "INDIA"
+                    city: videocity_Filter, //city which is selected by the user, default = "INDIA"
+                    district: videodistrict_Filter, //district of the article, default = "INDIA"
+                    constituency: constituency_Filter, //constituency of the article, default = "INDIA"
+                    app_language: language_Filter, //language selected by the user, default = "ENGLISH"
+                    current_page_url: currentpageurl_Filter, //url of the current  // full path? we wil nt get need new
+                    // "duration": parseInt(presentTime)
+                    duration: LiveDurationCalc
+                  });
+                }
+              }
+            } else {
+              if (VOD_OR_LIVE == "live") {
+                if (checkUnmuted == true) {
+                  console.log("Evnt 2");
+                  window.dataLayer.push({
+                    event: "newstime_duration",
+                    item_id: content_id_Filter, //video id
+                    item_name: videotitle_Filter, //video title
+                    item_category: item_category_Filter, //category of the article
+                    item_sub_category: item_sub_category_Filter, //sub-category of the article, default = "INDIA"
+                    state: state_Filter, //state which is selected by the user, default = "INDIA"
+                    city: videocity_Filter, //city which is selected by the user, default = "INDIA"
+                    district: videodistrict_Filter, //district of the article, default = "INDIA"
+                    constituency: constituency_Filter, //constituency of the article, default = "INDIA"
+                    app_language: language_Filter, //language selected by the user, default = "ENGLISH"
+                    current_page_url: currentpageurl_Filter, //url of the current  // full path? we wil nt get need new
+                    duration: parseInt(presentTime)
+                    //"duration": LiveDurationCalc
+                  });
+                }
+              }
+            }
+          }; // pause end
+
+          hlsPlayer.eventcallbacks.onMutedUnmuted = function(
+            MutedOrUnmuted,
+            presentTime,
+            duration,
+            mediaId
+          ) {
+            if (MutedOrUnmuted) {
+            } else {
+              checkUnmuted = true;
+
+              if (!IsUnmutedOnlyTime) {
+                if (player_status != "pause") {
+                  function LiveNewsSendGTMValueOnUnmuted(duration) {
+                    // Google GTM 360 start
+                    window.dataLayer.push({
+                      event: "newstime_start",
+                      item_id: content_id_Filter,
+                      item_name: videotitle_Filter,
+                      item_category: item_category_Filter,
+                      item_sub_category: item_sub_category_Filter,
+                      state: state_Filter,
+                      city: videocity_Filter,
+                      district: videodistrict_Filter,
+                      constituency: constituency_Filter,
+                      app_language: language_Filter,
+                      current_page_url: currentpageurl_Filter
+                    });
+                    // Google GTM 360 End
+                    IsUnmutedOnlyTime = true;
+                  }
+                  LiveNewsSendGTMValueOnUnmuted();
+                }
+              }
+            }
+          };
+
+          hlsPlayer.eventcallbacks.onResume = function(
+            presentTime,
+            duration,
+            mediaId
+          ) {
+            player_status = "onResume";
+            // console.log("onResume");
+
+            LiveEvntResumed = true;
+            LiveEvntTimerCounter = setInterval(CounterTimerLiveEvnt, 1000);
+
+            function LiveNewsSendGTMValueOnUnmuted(duration) {
+              // console.log("GTM Resume Fire");
+              // Google GTM 360 start
+              if (checkUnmuted == true) {
+                window.dataLayer.push({
+                  event: "newstime_start",
+                  item_id: content_id_Filter,
+                  item_name: videotitle_Filter,
+                  item_category: item_category_Filter,
+                  item_sub_category: item_sub_category_Filter,
+                  state: state_Filter,
+                  city: videocity_Filter,
+                  district: videodistrict_Filter,
+                  constituency: constituency_Filter,
+                  app_language: language_Filter,
+                  current_page_url: currentpageurl_Filter
+                });
+              }
+            }
+            LiveNewsSendGTMValueOnUnmuted();
+
+            var metadata = {
+              c2: 20416623,
+              c3: comscorec3Filter,
+              c4: "*null",
+              c6: "*null",
+              ns_st_ci: 13784,
+              ns_st_cl: "0",
+              ns_st_pu: "etv news",
+              ns_st_pr: "live news",
+              ns_st_tpr: 53617155,
+              ns_st_ep: "Bulletin",
+              ns_st_tep: 53617155,
+              ns_st_ge: "news",
+              ns_st_st: "ETV Bharat",
+              ns_st_ce: 1,
+              ns_st_ia: "*null",
+              ns_st_ddt: "*null",
+              ns_st_tdt: "*null"
+            };
+            comscrorePlayStart(metadata);
+          };
+          hlsPlayer.eventcallbacks.onComplete = function(
+            presentTime,
+            duration,
+            mediaId
+          ) {
+            player_status = "complete";
+            // console.log("complete");
+            comScoreStop();
+
+            // Google GTM 360 start
+            window.dataLayer.push({
+              event: "liveevent_complete",
+              item_id: content_id_Filter, //video id
+              item_name: videotitle_Filter, //video title
+              item_category: item_category_Filter, //category of the article
+              item_sub_category: item_sub_category_Filter, //sub-category of the article, default = "INDIA"
+              state: state_Filter, //state which is selected by the user, default = "INDIA"
+              city: videocity_Filter, //city which is selected by the user, default = "INDIA"
+              district: videodistrict_Filter, //district of the article, default = "INDIA"
+              constituency: constituency_Filter, //constituency of the article, default = "INDIA"
+              app_language: language_Filter, //language selected by the user, default = "ENGLISH"
+              current_page_url: currentpageurl_Filter //url of the current  // full path? we wil nt get need new params
+            });
+
+            window.dataLayer.push({
+              event: "liveevent_duration",
+              item_id: content_id_Filter, //video id
+              item_name: videotitle_Filter, //video title
+              item_category: item_category_Filter, //category of the article
+              item_sub_category: item_sub_category_Filter, //sub-category of the article, default = "INDIA"
+              state: state_Filter, //state which is selected by the user, default = "INDIA"
+              city: videocity_Filter, //city which is selected by the user, default = "INDIA"
+              district: videodistrict_Filter, //district of the article, default = "INDIA"
+              constituency: constituency_Filter, //constituency of the article, default = "INDIA"
+              app_language: language_Filter, //language selected by the user, default = "ENGLISH"
+              current_page_url: currentpageurl_Filter, //url of the current  // full path? we wil nt get need new params
+              duration: parseInt(presentTime)
+            });
+            // Google GTM 360 End
+          };
+          hlsPlayer.eventcallbacks.onSeeked = function(
+            presentTime,
+            duration,
+            mediaId
+          ) {
+            player_status = "seeked";
+            // console.log("seeked");
+            var metadata = {
+              c2: 20416623,
+              c3: comscorec3Filter,
+              c4: "*null",
+              c6: "*null",
+              ns_st_ci: 13784,
+              ns_st_cl: "0",
+              ns_st_pu: "etv news",
+              ns_st_pr: "live news",
+              ns_st_tpr: 53617155,
+              ns_st_ep: "Bulletin1",
+              ns_st_tep: 53617155,
+              ns_st_ge: "news",
+              ns_st_st: "ETV Bharat",
+              ns_st_ce: 1,
+              ns_st_ia: "*null",
+              ns_st_ddt: "*null",
+              ns_st_tdt: "*null"
+            };
+            comscrorePlayStart(metadata);
+          };
+        }
+        //COMSCORE FUNCTION END ==========================
+
+        // console.log(VOD_OR_LIVE + " test 33");
+        // console.log(contentFilter1 + " test 44");
+      } else if (VOD_OR_LIVE == "VOD") {
+        //if (VOD_OR_LIVE == 'VOD')
+        var VOD_Final_Duration = vod_duration_urlEvent(vod_duration_urlFilter);
+        var kiodloe = parseInt(VOD_Final_Duration);
+
+        //VOD VIDEO CONTENT
+
+        // console.log("ITs VOD");
+
+        if (kiodloe >= 600) {
+          // console.log("long");
+          // VOD CONTENT MORE THEN 10MINTS
+
+          // ANALYTICS DATA START
+
+          var contenturl = location.href;
+          var res = contenturl.split("contenturl=");
+
+          var videotitle,
+            currentpageurl,
+            videocity,
+            videodistrict,
+            constituency,
+            content_id,
+            item_category,
+            item_sub_category,
+            content_type,
+            language,
+            state;
+          var videotitle_Filter,
+            currentpageurl_Filter,
+            videocity_Filter,
+            videodistrict_Filter,
+            constituency_Filter,
+            content_id_Filter,
+            item_category_Filter,
+            item_sub_category_Filter,
+            content_type_Filter,
+            language_Filter,
+            state_Filter;
+
+          // videotitle start
+          videotitle = res[1].split("&videotitle=")[1];
+          if (videotitle != undefined) {
+            videotitle_Filter = decodeURI(videotitle.split("&")[0]);
+            // console.log(videotitle_Filter + " IOs videotitle 1");
+          }
+          // videotitle end
+
+          // currentpageurl start
+          currentpageurl = res[1].split("&currentpageurl=")[1];
+          if (currentpageurl != undefined) {
+            currentpageurl_Filter = currentpageurl.split("&")[0];
+            // console.log(currentpageurl_Filter + " IOs currentpageurl 2");
+          }
+          // currentpageurl end
+
+          // videocity start
+          videocity = res[1].split("&videocity=")[1];
+          if (videocity != undefined) {
+            videocity_Filter = videocity.split("&")[0];
+            // console.log(videocity_Filter + " IOs videocity 3");
+          }
+          // videocity end
+
+          // videodistrict start
+          videodistrict = res[1].split("&videodistrict=")[1];
+          if (videodistrict != undefined) {
+            videodistrict_Filter = videodistrict.split("&")[0];
+            // console.log(videodistrict_Filter + " IOs videodistrict 4");
+          }
+          // videodistrict end
+
+          // constituency start
+          constituency = res[1].split("&constituency=")[1];
+          if (constituency != undefined) {
+            constituency_Filter = constituency.split("&")[0];
+            // console.log(constituency_Filter + " IOs constituency 5");
+          }
+          // constituency end
+
+          // content_id start
+          content_id = res[1].split("&content_id=")[1];
+          if (content_id != undefined) {
+            content_id_Filter = content_id.split("&")[0];
+            // console.log(content_id_Filter + " IOs content_id 6");
+          }
+          // content_id end
+
+          // item_category start
+          item_category = res[1].split("&category=")[1];
+          if (item_category != undefined) {
+            item_category_Filter = item_category.split("&")[0];
+            // console.log(item_category_Filter + " IOs item_category 7");
+          } else {
+            // console.log(item_category_Filter + "Error IOs item_category 7");
+          }
+          // item_category end
+
+          // item_sub_category start
+          item_sub_category = res[1].split("&subcategory=")[1];
+          if (item_sub_category != undefined) {
+            item_sub_category_Filter = item_sub_category.split("&")[0];
+            // console.log(item_sub_category_Filter + " IOs item_sub_category_Filter 8");
+          } else {
+            // console.log(item_sub_category_Filter + "Error IOs item_sub_category_Filter 8");
+          }
+          // item_sub_category end
+
+          // content_type start
+          content_type = res[1].split("&content_type=")[1];
+          if (content_type != undefined) {
+            content_type_Filter = content_type.split("&")[0];
+            // console.log(content_type_Filter + " IOs content_type 9");
+          }
+          // videotitle end
+
+          // language start
+          language = res[1].split("&language=")[1];
+          if (language != undefined) {
+            language_Filter = language.split("&")[0];
+            // console.log(language_Filter + " IOs language 10");
+          }
+          // language end
+
+          // state start
+          state = res[1].split("&stateName=")[1];
+          if (state != undefined) {
+            state_Filter = state.split("&")[0];
+            // console.log(state_Filter + " IOs language 10");
+          }
+          // language end
+
+          // ANALYTICS DATA END
+
+          // Long Video Duraiton Manually Start
+          var VideoTimerManually;
+          var VideoTimerCount;
+
+          function StartVideoTimerTriger() {
+            VideoTimerManually = setInterval(StartVideoTimer, 1000);
+          }
+
+          VideoTimerCount = 0;
+
+          function StartVideoTimer() {
+            VideoTimerCount++;
+            // console.log(VideoTimerCount + " Logn TimeCounting 1");
+          }
+
+          function VideoTimerManuallyStopFunction() {
+            clearInterval(VideoTimerManually);
+          }
+          // Long Video Duraiton Manually End
+
+          // VIDEO COMPILATION START
+          var reached25 = false,
+            reached50 = false,
+            reached75 = false,
+            duration;
+
+          function saranyCurrentVideoDuration(thisCurrentTime, thisDuration) {
+            // console.log(thisCurrentTime + " CurrentTime " + thisDuration);
+
+            duration = thisDuration;
+            var current = thisCurrentTime,
+              perc = ((current / duration) * 100).toFixed(2);
+
+            if (Math.floor(perc) >= 25 && !reached25) {
+              // console.log("25% reached");
+
+              if (content_type_Filter == "vods") {
+                window.dataLayer.push({
+                  event: "vod_progress",
+                  video_view_percent: "25%",
+                  item_id: content_id_Filter, //video id
+                  item_name: videotitle_Filter, //video title
+                  item_category: item_category_Filter, //category of the article
+                  item_sub_category: item_sub_category_Filter, //sub-category of the article, default = "INDIA"
+                  state: state_Filter, //state which is selected by the user, default = "INDIA"
+                  city: videocity_Filter, //city which is selected by the user, default = "INDIA"
+                  district: videodistrict_Filter, //district of the article, default = "INDIA"
+                  constituency: constituency_Filter, //constituency of the article, default = "INDIA"
+                  app_language: language_Filter, //language selected by the user, default = "ENGLISH"
+                  current_page_url: currentpageurl_Filter //url of the current  // full path? we wil nt get need new
+                });
+              } else if (content_type_Filter == "inarticle") {
+                if (
+                  isMsite == "m.staging.etvbharat.com" ||
+                  isMsite == "m.etvbharat.com"
+                ) {
+                  window.dataLayer.push({
+                    event: "vod_progress",
+                    video_view_percent: "25%",
+                    item_id: content_id_Filter, //video id
+                    item_name: videotitle_Filter, //video title
+                    item_category: item_category_Filter, //category of the article
+                    item_sub_category: item_sub_category_Filter, //sub-category of the article, default = "INDIA"
+                    state: state_Filter, //state which is selected by the user, default = "INDIA"
+                    city: videocity_Filter, //city which is selected by the user, default = "INDIA"
+                    district: videodistrict_Filter, //district of the article, default = "INDIA"
+                    constituency: constituency_Filter, //constituency of the article, default = "INDIA"
+                    app_language: language_Filter, //language selected by the user, default = "ENGLISH"
+                    current_page_url: currentpageurl_Filter //url of the current  // full path? we wil nt get need new
+                  });
+                } else {
+                  window.dataLayer.push({
+                    event: "inarticle_progress",
+                    video_view_percent: "25%",
+                    item_id: content_id_Filter, //video id
+                    item_name: videotitle_Filter, //video title
+                    item_category: item_category_Filter, //category of the article
+                    item_sub_category: item_sub_category_Filter, //sub-category of the article, default = "INDIA"
+                    state: state_Filter, //state which is selected by the user, default = "INDIA"
+                    city: videocity_Filter, //city which is selected by the user, default = "INDIA"
+                    district: videodistrict_Filter, //district of the article, default = "INDIA"
+                    constituency: constituency_Filter, //constituency of the article, default = "INDIA"
+                    app_language: language_Filter, //language selected by the user, default = "ENGLISH"
+                    current_page_url: currentpageurl_Filter //url of the current  // full path? we wil nt get need new
+                  });
+                }
+              }
+
+              //ANDROID VIDEO 25% COMPLETED EVENTS START
+              function logEventTwentyFive(name, params) {
+                // console.log(name + " firebase function fire");
+                if (!name) {
+                  return;
+                }
+                if (window.AnalyticsWebInterface) {
+                  // Call Android interface
+                  window.AnalyticsWebInterface.logEvent25(
+                    name,
+                    JSON.stringify(params)
+                  );
+                } else if (
+                  window.webkit &&
+                  window.webkit.messageHandlers &&
+                  window.webkit.messageHandlers.firebase
+                ) {
+                  // Call iOS interface
+                  var message = {
+                    command: "logEvent25",
+                    name: name,
+                    parameters: params
+                  };
+                  window.webkit.messageHandlers.firebase.postMessage(message);
+                } else {
+                  // No Android or iOS interface found
+                  // console.log("No native APIs found.");
+                }
+              }
+              logEventTwentyFive("inarticle_progress", {
+                item_id: content_id_Filter,
+                item_name: videotitle_Filter,
+                item_category: item_category_Filter,
+                item_sub_category: item_sub_category_Filter,
+                state: state_Filter,
+                city: videocity_Filter,
+                district: videodistrict_Filter,
+                constituency: constituency_Filter,
+                app_language: language_Filter,
+                video_depth_percent: "25%"
+              });
+              //ANDROID VIDEO 25% COMPLETED EVENTS END
+
+              reached25 = true;
+            } else if (Math.floor(perc) >= 50 && !reached50) {
+              // console.log("50% reached");
+
+              if (content_type_Filter == "vods") {
+                window.dataLayer.push({
+                  event: "vod_progress",
+                  video_view_percent: "50%",
+                  item_id: content_id_Filter, //video id
+                  item_name: videotitle_Filter, //video title
+                  item_category: item_category_Filter, //category of the article
+                  item_sub_category: item_sub_category_Filter, //sub-category of the article, default = "INDIA"
+                  state: state_Filter, //state which is selected by the user, default = "INDIA"
+                  city: videocity_Filter, //city which is selected by the user, default = "INDIA"
+                  district: videodistrict_Filter, //district of the article, default = "INDIA"
+                  constituency: constituency_Filter, //constituency of the article, default = "INDIA"
+                  app_language: language_Filter, //language selected by the user, default = "ENGLISH"
+                  current_page_url: currentpageurl_Filter //url of the current  // full path? we wil nt get need new
+                });
+              } else if (content_type_Filter == "inarticle") {
+                if (
+                  isMsite == "m.staging.etvbharat.com" ||
+                  isMsite == "m.etvbharat.com"
+                ) {
+                  window.dataLayer.push({
+                    event: "vod_progress",
+                    video_view_percent: "50%",
+                    item_id: content_id_Filter, //video id
+                    item_name: videotitle_Filter, //video title
+                    item_category: item_category_Filter, //category of the article
+                    item_sub_category: item_sub_category_Filter, //sub-category of the article, default = "INDIA"
+                    state: state_Filter, //state which is selected by the user, default = "INDIA"
+                    city: videocity_Filter, //city which is selected by the user, default = "INDIA"
+                    district: videodistrict_Filter, //district of the article, default = "INDIA"
+                    constituency: constituency_Filter, //constituency of the article, default = "INDIA"
+                    app_language: language_Filter, //language selected by the user, default = "ENGLISH"
+                    current_page_url: currentpageurl_Filter //url of the current  // full path? we wil nt get need new
+                  });
+                } else {
+                  window.dataLayer.push({
+                    event: "inarticle_progress",
+                    video_view_percent: "50%",
+                    item_id: content_id_Filter, //video id
+                    item_name: videotitle_Filter, //video title
+                    item_category: item_category_Filter, //category of the article
+                    item_sub_category: item_sub_category_Filter, //sub-category of the article, default = "INDIA"
+                    state: state_Filter, //state which is selected by the user, default = "INDIA"
+                    city: videocity_Filter, //city which is selected by the user, default = "INDIA"
+                    district: videodistrict_Filter, //district of the article, default = "INDIA"
+                    constituency: constituency_Filter, //constituency of the article, default = "INDIA"
+                    app_language: language_Filter, //language selected by the user, default = "ENGLISH"
+                    current_page_url: currentpageurl_Filter //url of the current  // full path? we wil nt get need new
+                  });
+                }
+              }
+
+              //ANDROID VIDEO 50% COMPLETED EVENTS START
+              function logEventFiftyCompleted(name, params) {
+                // console.log(name + " firebase function fire");
+                if (!name) {
+                  return;
+                }
+                if (window.AnalyticsWebInterface) {
+                  // Call Android interface
+                  window.AnalyticsWebInterface.logEvent(
+                    name,
+                    JSON.stringify(params)
+                  );
+                } else if (
+                  window.webkit &&
+                  window.webkit.messageHandlers &&
+                  window.webkit.messageHandlers.firebase
+                ) {
+                  // Call iOS interface
+                  var message = {
+                    command: "logEvent",
+                    name: name,
+                    parameters: params
+                  };
+                  window.webkit.messageHandlers.firebase.postMessage(message);
+                } else {
+                  // No Android or iOS interface found
+                  // console.log("No native APIs found.");
+                }
+              }
+              logEventFiftyCompleted("inarticle_progress", {
+                item_id: content_id_Filter,
+                item_name: videotitle_Filter,
+                item_category: item_category_Filter,
+                item_sub_category: item_sub_category_Filter,
+                state: state_Filter,
+                city: videocity_Filter,
+                district: videodistrict_Filter,
+                constituency: constituency_Filter,
+                app_language: language_Filter,
+                video_depth_percent: "50%"
+              });
+              //ANDROID VIDEO 50% COMPLETED EVENTS ENDs
+
+              reached50 = true;
+            } else if (Math.floor(perc) >= 75 && !reached75) {
+              // console.log("75% reached");
+
+              if (content_type_Filter == "vods") {
+                window.dataLayer.push({
+                  event: "vod_progress",
+                  video_view_percent: "75%",
+                  item_id: content_id_Filter, //video id
+                  item_name: videotitle_Filter, //video title
+                  item_category: item_category_Filter, //category of the article
+                  item_sub_category: item_sub_category_Filter, //sub-category of the article, default = "INDIA"
+                  state: state_Filter, //state which is selected by the user, default = "INDIA"
+                  city: videocity_Filter, //city which is selected by the user, default = "INDIA"
+                  district: videodistrict_Filter, //district of the article, default = "INDIA"
+                  constituency: constituency_Filter, //constituency of the article, default = "INDIA"
+                  app_language: language_Filter, //language selected by the user, default = "ENGLISH"
+                  current_page_url: currentpageurl_Filter //url of the current  // full path? we wil nt get need new
+                });
+              } else if (content_type_Filter == "inarticle") {
+                if (
+                  isMsite == "m.staging.etvbharat.com" ||
+                  isMsite == "m.etvbharat.com"
+                ) {
+                  window.dataLayer.push({
+                    event: "vod_progress",
+                    video_view_percent: "75%",
+                    item_id: content_id_Filter, //video id
+                    item_name: videotitle_Filter, //video title
+                    item_category: item_category_Filter, //category of the article
+                    item_sub_category: item_sub_category_Filter, //sub-category of the article, default = "INDIA"
+                    state: state_Filter, //state which is selected by the user, default = "INDIA"
+                    city: videocity_Filter, //city which is selected by the user, default = "INDIA"
+                    district: videodistrict_Filter, //district of the article, default = "INDIA"
+                    constituency: constituency_Filter, //constituency of the article, default = "INDIA"
+                    app_language: language_Filter, //language selected by the user, default = "ENGLISH"
+                    current_page_url: currentpageurl_Filter //url of the current  // full path? we wil nt get need new
+                  });
+                } else {
+                  window.dataLayer.push({
+                    event: "inarticle_progress",
+                    video_view_percent: "75%",
+                    item_id: content_id_Filter, //video id
+                    item_name: videotitle_Filter, //video title
+                    item_category: item_category_Filter, //category of the article
+                    item_sub_category: item_sub_category_Filter, //sub-category of the article, default = "INDIA"
+                    state: state_Filter, //state which is selected by the user, default = "INDIA"
+                    city: videocity_Filter, //city which is selected by the user, default = "INDIA"
+                    district: videodistrict_Filter, //district of the article, default = "INDIA"
+                    constituency: constituency_Filter, //constituency of the article, default = "INDIA"
+                    app_language: language_Filter, //language selected by the user, default = "ENGLISH"
+                    current_page_url: currentpageurl_Filter //url of the current  // full path? we wil nt get need new
+                  });
+                }
+              }
+
+              //ANDROID VIDEO 75% COMPLETED EVENTS START  ddd
+              function logEventSeventyFiveCompleted(name, params) {
+                // console.log(name + " firebase function fire");
+                if (!name) {
+                  return;
+                }
+                if (window.AnalyticsWebInterface) {
+                  // Call Android interface
+                  window.AnalyticsWebInterface.logEvent(
+                    name,
+                    JSON.stringify(params)
+                  );
+                } else if (
+                  window.webkit &&
+                  window.webkit.messageHandlers &&
+                  window.webkit.messageHandlers.firebase
+                ) {
+                  // Call iOS interface
+                  var message = {
+                    command: "logEvent",
+                    name: name,
+                    parameters: params
+                  };
+                  window.webkit.messageHandlers.firebase.postMessage(message);
+                } else {
+                  // No Android or iOS interface found
+                  // console.log("No native APIs found.");
+                }
+              }
+              logEventSeventyFiveCompleted("inarticle_progress", {
+                item_id: content_id_Filter,
+                item_name: videotitle_Filter,
+                item_category: item_category_Filter,
+                item_sub_category: item_sub_category_Filter,
+                state: state_Filter,
+                city: videocity_Filter,
+                district: videodistrict_Filter,
+                constituency: constituency_Filter,
+                app_language: language_Filter,
+                video_depth_percent: "75%"
+              });
+              //ANDROID VIDEO 75% COMPLETED EVENTS END
+
+              reached75 = true;
+            }
+            //console.log(perc);
+          }
+          // VIDEO COMPILATION END
+
+          var VOD_Long_Ads_durtion;
+          var streamingAnalytics;
+
+          function comScoreNewInstance() {
+            streamingAnalytics = new ns_.ReducedRequirementsStreamingAnalytics({
+              publisherId: "20416623"
+            });
+            return streamingAnalytics;
+          }
+
+          function VideoReplay(player_status) {
+            var videoPlayStatus = localStorage.getItem("videoPlay");
+            var videoCompleteStatus = localStorage.getItem("videoComplete");
+            var AdsComplteStatus = localStorage.getItem("AdsCompleteStatus");
+            if (player_status == "playing") {
+              if (videoCompleteStatus == "true" && videoPlayStatus == "true") {
+                comScoreNewInstance();
+              } else {
+                comScoreNewInstance();
+              }
+            }
+          } //main end
+          //COMSCORE FUNCTION START  ==========================
+          function comscrorePlayStart(metadata) {
+            streamingAnalytics.playVideoContentPart(
+              metadata,
+              ns_.ReducedRequirementsStreamingAnalytics.ContentType
+                .LongFormOnDemand
+            );
+          }
+
+          function comScoreStop() {
+            streamingAnalytics.stop();
+          }
+
+          function getAdsDuration(passDuration) {
+            VOD_Long_Ads_durtion = passDuration;
+          }
+
+          function comScoreAdsStart() {
+            streamingAnalytics.playVideoAdvertisement(
+              {
+                ns_st_cl: VOD_Long_Ads_durtion * 1000
+              },
+              ns_.ReducedRequirementsStreamingAnalytics.AdType
+                .LinearOnDemandMidRoll
+            );
+          }
+          //ADS STATUSd
+          function AdsEventCallBacks(imgAdStatu) {
+            if (imgAdStatu == "STARTED") {
+              try {
+                localStorage.setItem("AdsCompleteStatus", true);
+              } catch {
+                console.log("localStorage access denied");
+              }
+              comScoreAdsStart();
+            } else if (imgAdStatu == "COMPLETE") {
+              try {
+                localStorage.setItem("AdsCompleteStatus", false);
+              } catch {
+                console.log("localStorage access denied");
+              }
+              comScoreStop();
+              sessionStorage.clear("isDuration");
+              // hlsPlayer._videoPlayerControls("play");
+            } else if (imgAdStatu == "PAUSE") {
+            } else if (imgAdStatu == "RESUMED") {
+            } else if (imgAdStatu == "LOADED") {
+              comScoreStop();
+            }
+          }
+          // COMSCORE VIDEO EVENTS END
+
+          //MSITE USER SCROLL DOWN PLAY/PAUSE START lOGN VIDEO
+          window.addEventListener("message", MsiteVodsPlyPus, false);
+
+          function MsiteVodsPlyPus(e) {
+            if (e.origin == "*") {
+              return;
+            } else {
+              if (e.data == "SPMsiteVodsPlay") {
+                playPlayer();
+              } else if (e.data == "SPMsiteVodsPause") {
+                pausePlayer();
+                msiteSendingDuraitonWhileUserScrollDown();
+              }
+            }
+          }
+
+          //MSITE USER SCROLL DOWN PLAY/PAUSE END lOGN VIDEO
+
+          //WEBSITE  USER SCROLL DOWN PLAY/PAUSE START lOGN VIDEO
+          window.addEventListener("message", WebsiteVodsPlyPus, false);
+
+          function WebsiteVodsPlyPus(e) {
+            if (e.origin == "*") {
+              return;
+            } else {
+              // console.log(e.data + " SPNewsTimePlay*****");
+              if (e.data == "SPWebSiteVodsPlay") {
+                playPlayer();
+              } else if (e.data == "SPWebSiteVodsPause") {
+                pausePlayer();
+                //WebsiteVodsUserScrollDownOrNavigateToAway();
+              }
+            }
+          }
+          //WEBSITE  USER SCROLL DOWN PLAY/PAUSE END lOGN VIDEO
+
+          function createEventCallBacks() {
+            hlsPlayer.eventcallbacks.onPlay = function(
+              presentTime,
+              duration,
+              mediaId
+            ) {
+              player_status = "playing";
+              // console.log("playing");
+
+              if (
+                isMsite == "m.staging.etvbharat.com" ||
+                isMsite == "m.etvbharat.com"
+              ) {
+                if (content_type_Filter == "inarticle") {
+                  // console.log('msite inarticle start logn');
+                  window.dataLayer.push({
+                    event: "inarticle_start",
+                    item_id: content_id_Filter, //video id
+                    item_name: videotitle_Filter, //video title
+                    item_category: item_category_Filter, //category of the article
+                    item_sub_category: item_sub_category_Filter, //sub-category of the article, default = "INDIA"
+                    state: state_Filter, //state which is selected by the user, default = "INDIA"
+                    city: videocity_Filter, //city which is selected by the user, default = "INDIA"
+                    district: videodistrict_Filter, //district of the article, default = "INDIA"
+                    constituency: constituency_Filter, //constituency of the article, default = "INDIA"
+                    app_language: language_Filter, //language selected by the user, default = "ENGLISH"
+                    current_page_url: currentpageurl_Filter //url of the current  // full path? we wil nt get need new
+                  });
+                }
+              }
+
+              if (content_type_Filter == "vods") {
+                // console.log('VOD GTM Play Evn VODS-logn');
+
+                // Google GTM 360 start
+                window.dataLayer.push({
+                  event: "vod_start",
+                  item_id: content_id_Filter, //video id
+                  item_name: videotitle_Filter, //video title
+                  item_category: item_category_Filter, //category of the article
+                  item_sub_category: item_sub_category_Filter, //sub-category of the article, default = "INDIA"
+                  state: state_Filter, //state which is selected by the user, default = "INDIA"
+                  city: videocity_Filter, //city which is selected by the user, default = "INDIA"
+                  district: videodistrict_Filter, //district of the article, default = "INDIA"
+                  constituency: constituency_Filter, //constituency of the article, default = "INDIA"
+                  app_language: language_Filter, //language selected by the user, default = "ENGLISH"
+                  current_page_url: currentpageurl_Filter //url of the current  // full path? we wil nt get need new params
+                });
+                // Google GTM 360 End
+              } else if (content_type_Filter == "inarticle") {
+                // Google GTM 360 star
+                // Google GTM 360 End
+              }
+
+              if (player_status == "playing") {
+                var getDurationsesf = getTotalDuration();
+              }
+              // TRACKING TRUE FIRE GA EVENT START
+              var GA_Event_Start = checkVideoStatusVODelseLive(GA_TRACK_START);
+              if (GA_Event_Start == "true") {
+              }
+              // TRACKING TRUE FIRE GA EVENT END
+              try {
+                localStorage.setItem("videoPlay", true);
+              } catch {
+                console.log("localStorage access denied");
+              }
+              setTimeout(function() {
+                localStorage.removeItem("videoPlay");
+                localStorage.removeItem("videoComplete");
+              }, 2000);
+              VideoReplay(player_status);
+              var metadata = {
+                c2: 20416623,
+                c3: comscorec3Filter,
+                c4: "*null",
+                c6: "*null",
+                ns_st_ci: 13784,
+                ns_st_cl: VOD_Final_Duration * 1000,
+                ns_st_pu: "etv news",
+                ns_st_pr: "article video",
+                ns_st_tpr: 53617155,
+                ns_st_ep: "Bulletin1",
+                ns_st_tep: 53617155,
+                ns_st_ge: "news",
+                ns_st_st: "ETV Bharat",
+                ns_st_ce: 1,
+                ns_st_ia: "*null",
+                ns_st_ddt: "*null",
+                ns_st_tdt: "*null"
+              };
+              comscrorePlayStart(metadata);
+
+              //Firebase video completed start
+
+              function logEventStart(name, params) {
+                // console.log(name + " firebase function fire");
+                if (!name) {
+                  return;
+                }
+                if (window.AnalyticsWebInterface) {
+                  // Call Android interface
+                  window.AnalyticsWebInterface.logEventStart(
+                    name,
+                    JSON.stringify(params)
+                  );
+                } else if (
+                  window.webkit &&
+                  window.webkit.messageHandlers &&
+                  window.webkit.messageHandlers.firebase
+                ) {
+                  // Call iOS interface
+                  var message = {
+                    command: "logEventStart",
+                    name: name,
+                    parameters: params
+                  };
+                  window.webkit.messageHandlers.firebase.postMessage(message);
+                } else {
+                  // No Android or iOS interface found
+                  // console.log("No native APIs found.");
+                }
+              }
+              logEventStart("inarticle_start", {
+                item_id: content_id_Filter,
+                item_name: videotitle_Filter,
+                item_category: item_category_Filter,
+                item_sub_category: item_sub_category_Filter,
+                state: state_Filter,
+                city: videocity_Filter,
+                district: videodistrict_Filter,
+                constituency: constituency_Filter,
+                app_language: language_Filter
+              });
+              //Firebase video completed end
+            };
+            hlsPlayer.eventcallbacks.onPause = function(
+              presentTime,
+              duration,
+              mediaId
+            ) {
+              // console.log("pause");
+              player_status = "pause";
+
+              // logn video start
+              function msiteSendingDuraitonWhileUserScrollDown() {
+                window.dataLayer.push({
+                  event: "newstime_durationUserNavigate",
+                  item_id: content_id_Filter, //video id
+                  item_name: videotitle_Filter, //video title
+                  item_category: item_category_Filter, //category of the article
+                  item_sub_category: item_sub_category_Filter, //sub-category of the article, default = "INDIA"
+                  state: state_Filter, //state which is selected by the user, default = "INDIA"
+                  city: videocity_Filter, //city which is selected by the user, default = "INDIA"
+                  district: videodistrict_Filter, //district of the article, default = "INDIA"
+                  constituency: constituency_Filter, //constituency of the article, default = "INDIA"
+                  app_language: language_Filter, //language selected by the user, default = "ENGLISH"
+                  current_page_url: currentpageurl_Filter, //url of the current  // full path? we wil nt get need new
+                  duration: parseInt(presentTime)
+                });
+              }
+
+              function WebsiteVodsUserScrollDownOrNavigateToAway() {
+                window.dataLayer.push({
+                  event: "newstime_durationUserNavigate",
+                  item_id: content_id_Filter, //video id
+                  item_name: videotitle_Filter, //video title
+                  item_category: item_category_Filter, //category of the article
+                  item_sub_category: item_sub_category_Filter, //sub-category of the article, default = "INDIA"
+                  state: state_Filter, //state which is selected by the user, default = "INDIA"
+                  city: videocity_Filter, //city which is selected by the user, default = "INDIA"
+                  district: videodistrict_Filter, //district of the article, default = "INDIA"
+                  constituency: constituency_Filter, //constituency of the article, default = "INDIA"
+                  app_language: language_Filter, //language selected by the user, default = "ENGLISH"
+                  current_page_url: currentpageurl_Filter, //url of the current  // full path? we wil nt get need new
+                  duration: parseInt(presentTime)
+                });
+              }
+              // logn video end
+
+              VideoReplay(player_status);
+              comScoreStop();
+            };
+            hlsPlayer.eventcallbacks.onResume = function(
+              presentTime,
+              duration,
+              mediaId
+            ) {
+              player_status = "onResume";
+              // console.log("onResume");
+              VideoReplay(player_status);
+              var metadata = {
+                c2: 20416623,
+                c3: comscorec3Filter,
+                c4: "*null",
+                c6: "*null",
+                ns_st_ci: 13784,
+                ns_st_cl: VOD_Final_Duration * 1000,
+                ns_st_pu: "etv news",
+                ns_st_pr: "article video",
+                ns_st_tpr: 53617155,
+                ns_st_ep: "Bulletin1",
+                ns_st_tep: 53617155,
+                ns_st_ge: "news",
+                ns_st_st: "ETV Bharat",
+                ns_st_ce: 1,
+                ns_st_ia: "*null",
+                ns_st_ddt: "*null",
+                ns_st_tdt: "*null"
+              };
+              comscrorePlayStart(metadata);
+            };
+            hlsPlayer.eventcallbacks.onComplete = function(
+              presentTime,
+              duration,
+              mediaId
+            ) {
+              // console.log("complete");
+              player_status = "complete";
+
+              // Logn Video Duraiton Manually Stop Function Start
+              VideoTimerManuallyStopFunction();
+              // Logn Video Duraiton Manually Stop Function End
+
+              if (content_type_Filter == "vods") {
+                // console.log('VOD GTM Play Evn VODS-logn');
+
+                // Google GTM 360 start
+
+                //vod_complete
+                window.dataLayer.push({
+                  event: "vod_complete",
+                  item_id: content_id_Filter, //video id
+                  item_name: videotitle_Filter, //video title
+                  item_category: item_category_Filter, //category of the article
+                  item_sub_category: item_sub_category_Filter, //sub-category of the article, default = "INDIA"
+                  state: state_Filter, //state which is selected by the user, default = "INDIA"
+                  city: videocity_Filter, //city which is selected by the user, default = "INDIA"
+                  district: videodistrict_Filter, //district of the article, default = "INDIA"
+                  constituency: constituency_Filter, //constituency of the article, default = "INDIA"
+                  app_language: language_Filter, //language selected by the user, default = "ENGLISH"
+                  current_page_url: currentpageurl_Filter //url of the current  // full path? we wil nt get need new params
+                });
+
+                //vod_duration
+                window.dataLayer.push({
+                  event: "vod_duration",
+                  item_id: content_id_Filter, //video id
+                  item_name: videotitle_Filter, //video title
+                  item_category: item_category_Filter, //category of the article
+                  item_sub_category: item_sub_category_Filter, //sub-category of the article, default = "INDIA"
+                  state: state_Filter, //state which is selected by the user, default = "INDIA"
+                  city: videocity_Filter, //city which is selected by the user, default = "INDIA"
+                  district: videodistrict_Filter, //district of the article, default = "INDIA"
+                  constituency: constituency_Filter, //constituency of the article, default = "INDIA"
+                  app_language: language_Filter, //language selected by the user, default = "ENGLISH"
+                  current_page_url: currentpageurl_Filter, //url of the current  // full path? we wil nt get need
+                  duration: parseInt(presentTime)
+                });
+                // Google GTM 360 End
+              } else if (content_type_Filter == "inarticle") {
+                // console.log('its inarticle VODS-logn');
+                // Google GTM 360 start
+
+                // inarticle_complete
+                window.dataLayer.push({
+                  event: "inarticle_complete",
+                  item_id: content_id_Filter, //video id
+                  item_name: videotitle_Filter, //video title
+                  item_category: item_category_Filter, //category of the article
+                  item_sub_category: item_sub_category_Filter, //sub-category of the article, default = "INDIA"
+                  state: state_Filter, //state which is selected by the user, default = "INDIA"
+                  city: videocity_Filter, //city which is selected by the user, default = "INDIA"
+                  district: videodistrict_Filter, //district of the article, default = "INDIA"
+                  constituency: constituency_Filter, //constituency of the article, default = "INDIA"
+                  app_language: language_Filter, //language selected by the user, default = "ENGLISH"
+                  current_page_url: currentpageurl_Filter //url of the current  // full path? we wil nt get need new
+                });
+                // Google GTM 360 End
+
+                // inarticle_duration
+                window.dataLayer.push({
+                  event: "inarticle_duration",
+                  item_id: content_id_Filter, //video id
+                  item_name: videotitle_Filter, //video title
+                  item_category: item_category_Filter, //category of the article
+                  item_sub_category: item_sub_category_Filter, //sub-category of the article, default = "INDIA"
+                  state: state_Filter, //state which is selected by the user, default = "INDIA"
+                  city: videocity_Filter, //city which is selected by the user, default = "INDIA"
+                  district: videodistrict_Filter, //district of the article, default = "INDIA"
+                  constituency: constituency_Filter, //constituency of the article, default = "INDIA"
+                  app_language: language_Filter, //language selected by the user, default = "ENGLISH"
+                  current_page_url: currentpageurl_Filter, //url of the current  // full path? we wil nt get need
+                  duration: VideoTimerCount
+                  // 'duration': parseInt(presentTime)
+                });
+              }
+
+              // TRACKING TRUE FIRE GA EVENT START
+              var GA_Event_Start = checkVideoStatusVODelseLive(GA_TRACK_START);
+              if (GA_Event_Start == "true") {
+              }
+              // TRACKING TRUE FIRE GA EVENT END
+              try {
+                localStorage.setItem("videoComplete", true);
+              } catch {
+                console.log("localStorage access denied");
+              }
+              //localStorage.setItem("videoPlay", false);
+              VideoReplay(player_status);
+              //REMOVE DURATION ONCE COMPLETEDdd
+              localStorage.removeItem("embedPlayerDuration");
+              comScoreStop();
+
+              //Firebase video completed start
+              setTimeout(function() {
+                function logEventInarticle_complete(name, params) {
+                  if (!name) {
+                    return;
+                  }
+                  if (window.AnalyticsWebInterface) {
+                    // Call Android interface
+                    window.AnalyticsWebInterface.logEvent(
+                      name,
+                      JSON.stringify(params)
+                    );
+                  } else if (
+                    window.webkit &&
+                    window.webkit.messageHandlers &&
+                    window.webkit.messageHandlers.firebase
+                  ) {
+                    // Call iOS interface
+                    var message = {
+                      command: "logEvent",
+                      name: name,
+                      parameters: params
+                    };
+                    window.webkit.messageHandlers.firebase.postMessage(message);
+                  } else {
+                    // No Android or iOS interface found
+                    //console.log("No native APIs found.");
+                  }
+                }
+                logEventInarticle_complete("inarticle_complete", {
+                  item_id: content_id_Filter,
+                  item_name: videotitle_Filter,
+                  item_category: item_category_Filter,
+                  item_sub_category: item_sub_category_Filter,
+                  state: state_Filter,
+                  city: videocity_Filter,
+                  district: videodistrict_Filter,
+                  constituency: constituency_Filter,
+                  app_language: language_Filter
+                });
+              }, 100);
+
+              //Android In-Article start
+              function logEventInarticle_Duration(name, params) {
+                if (!name) {
+                  return;
+                }
+                if (window.AnalyticsWebInterface) {
+                  // Call Android interface
+                  window.AnalyticsWebInterface.logEvent(
+                    name,
+                    JSON.stringify(params)
+                  );
+                } else if (
+                  window.webkit &&
+                  window.webkit.messageHandlers &&
+                  window.webkit.messageHandlers.firebase
+                ) {
+                  // Call iOS interface
+                  var message = {
+                    command: "logEvent",
+                    name: name,
+                    parameters: params
+                  };
+                  window.webkit.messageHandlers.firebase.postMessage(message);
+                } else {
+                  // No Android or iOS interface found
+                  //console.log("No native APIs found.");
+                }
+              }
+              logEventInarticle_Duration("inarticle_duration", {
+                item_id: content_id_Filter,
+                item_name: videotitle_Filter,
+                item_category: item_category_Filter,
+                item_sub_category: item_sub_category_Filter,
+                state: state_Filter,
+                city: videocity_Filter,
+                district: videodistrict_Filter,
+                constituency: constituency_Filter,
+                app_language: language_Filter,
+                duration: parseInt(presentTime)
+              });
+              //Android In-Article inarticle_duration logn End
+            };
+            hlsPlayer.eventcallbacks.onSeeked = function(
+              presentTime,
+              duration,
+              mediaId
+            ) {
+              player_status = "seeked";
+              VideoReplay(player_status);
+            };
+
+            //yd
+            var IsUnmutedOnlyTime = false;
+            var InarticleFirstTimeFireGTMOnUnmute = false;
+
+            hlsPlayer.eventcallbacks.onMutedUnmuted = function(
+              MutedOrUnmuted,
+              presentTime,
+              duration,
+              mediaId
+            ) {
+              // Logn Video Duraiton Manually Start Function Start
+              StartVideoTimerTriger();
+              // Logn Video Duraiton Manually Start Function Start
+
+              if (MutedOrUnmuted) {
+                // console.log("Mute long");
+              } else {
+                // console.log("UnMute long");
+                if (!IsUnmutedOnlyTime) {
+                  if (!InarticleFirstTimeFireGTMOnUnmute) {
+                    if (content_type_Filter == "inarticle") {
+                      // Google GTM 360 start
+                      // console.log('Inarticle Video unmuted GTM Fire VODS-short');
+                      window.dataLayer.push({
+                        event: "inarticle_start",
+                        item_id: content_id_Filter, //video id
+                        item_name: videotitle_Filter, //video title
+                        item_category: item_category_Filter, //category of the article
+                        item_sub_category: item_sub_category_Filter, //sub-category of the article, default = "INDIA"
+                        state: state_Filter, //state which is selected by the user, default = "INDIA"
+                        city: videocity_Filter, //city which is selected by the user, default = "INDIA"
+                        district: videodistrict_Filter, //district of the article, default = "INDIA"
+                        constituency: constituency_Filter, //constituency of the article, default = "INDIA"
+                        app_language: language_Filter, //language selected by the user, default = "ENGLISH"
+                        current_page_url: currentpageurl_Filter //url of the current  // full path? we wil nt get need new params
+                      });
+                    }
+                    InarticleFirstTimeFireGTMOnUnmute = true;
+                  }
+                }
+              }
+            };
+          }
+          //COMSCORE FUNCTION ENDd ==========================
+        } else {
+          // VOD CONTENT LESS THEN 10MINTS
+
+          // console.log("short");
+
+          //GTM Events Data start
+          var contenturl = location.href;
+          var res = contenturl.split("contenturl=");
+
+          var videotitle,
+            currentpageurl,
+            videocity,
+            videodistrict,
+            constituency,
+            content_id,
+            item_category,
+            item_sub_category,
+            content_type,
+            language,
+            state;
+          var videotitle_Filter,
+            currentpageurl_Filter,
+            videocity_Filter,
+            videodistrict_Filter,
+            constituency_Filter,
+            content_id_Filter,
+            item_category_Filter,
+            item_sub_category_Filter,
+            content_type_Filter,
+            language_Filter,
+            state_Filter;
+
+          // videotitle start
+          videotitle = res[1].split("&videotitle=")[1];
+          if (videotitle != undefined) {
+            videotitle_Filter = decodeURI(videotitle.split("&")[0]);
+          }
+          // videotitle end
+
+          // currentpageurl start
+          currentpageurl = res[1].split("&currentpageurl=")[1];
+          if (currentpageurl != undefined) {
+            currentpageurl_Filter = currentpageurl.split("&")[0];
+            // console.log(currentpageurl_Filter + " VODS-short currentpageurl 2");
+          }
+          // currentpageurl end
+
+          // videocity start
+          videocity = res[1].split("&videocity=")[1];
+          if (videocity != undefined) {
+            videocity_Filter = videocity.split("&")[0];
+          }
+          // videocity end
+
+          // videodistrict start
+          videodistrict = res[1].split("&videodistrict=")[1];
+          if (videodistrict != undefined) {
+            videodistrict_Filter = videodistrict.split("&")[0];
+          }
+          // videodistrict end
+
+          // constituency start
+          constituency = res[1].split("&constituency=")[1];
+          if (constituency != undefined) {
+            constituency_Filter = constituency.split("&")[0];
+          }
+          // constituency end
+
+          // content_id start
+          content_id = res[1].split("&content_id=")[1];
+          if (content_id != undefined) {
+            content_id_Filter = content_id.split("&")[0];
+          }
+          // content_id end
+
+          // item_category start
+          item_category = res[1].split("&category=")[1];
+          if (item_category != undefined) {
+            item_category_Filter = item_category.split("&")[0];
+          } else {
+            item_category_Filter = "INDIA";
+          }
+          // item_category end
+
+          // item_sub_category start
+          item_sub_category = res[1].split("&subcategory=")[1];
+          if (item_sub_category != undefined) {
+            item_sub_category_Filter = item_sub_category.split("&")[0];
+          } else {
+            item_sub_category_Filter = "INDIA";
+          }
+          // item_sub_category end
+
+          // content_type start
+          content_type = res[1].split("&content_type=")[1];
+          if (content_type != undefined) {
+            content_type_Filter = content_type.split("&")[0];
+          }
+          // videotitle end
+
+          // language start
+          language = res[1].split("&language=")[1];
+          if (language != undefined) {
+            language_Filter = language.split("&")[0];
+          }
+          // language end
+
+          // state start
+          state = res[1].split("&stateName=")[1];
+          if (state != undefined) {
+            state_Filter = state.split("&")[0];
+          }
+          // language end
+
+          //GTM Events Data end
+
+          // Short Video Duraiton Manually Start
+          var VideoTimerManually;
+          var VideoTimerCount;
+
+          function StartVideoTimerTriger() {
+            VideoTimerManually = setInterval(StartVideoTimer, 1000);
+          }
+
+          VideoTimerCount = 0;
+
+          function StartVideoTimer() {
+            VideoTimerCount++;
+            // console.log(VideoTimerCount + " Short TimeCounting 1");
+          }
+
+          function VideoTimerManuallyStopFunction() {
+            clearInterval(VideoTimerManually);
+          }
+          // Short Video Duraiton Manually End
+
+          // VIDEO COMPILATION START
+          var reached25 = false,
+            reached50 = false,
+            reached75 = false,
+            duration;
+
+          function saranyCurrentVideoDuration(thisCurrentTime, thisDuration) {
+            duration = thisDuration;
+            var current = thisCurrentTime,
+              perc = ((current / duration) * 100).toFixed(2);
+
+            if (Math.floor(perc) >= 25 && !reached25) {
+              // console.log("25% reached");
+
+              if (content_type_Filter == "vods") {
+                window.dataLayer.push({
+                  event: "vod_progress",
+                  video_view_percent: "25%",
+                  item_id: content_id_Filter, //video id
+                  item_name: videotitle_Filter, //video title
+                  item_category: item_category_Filter, //category of the article
+                  item_sub_category: item_sub_category_Filter, //sub-category of the article, default = "INDIA"
+                  state: state_Filter, //state which is selected by the user, default = "INDIA"
+                  city: videocity_Filter, //city which is selected by the user, default = "INDIA"
+                  district: videodistrict_Filter, //district of the article, default = "INDIA"
+                  constituency: constituency_Filter, //constituency of the article, default = "INDIA"
+                  app_language: language_Filter, //language selected by the user, default = "ENGLISH"
+                  current_page_url: currentpageurl_Filter //url of the current  // full path? we wil nt get need new
+                });
+              } else if (content_type_Filter == "inarticle") {
+                if (
+                  isMsite == "m.staging.etvbharat.com" ||
+                  isMsite == "m.etvbharat.com"
+                ) {
+                  window.dataLayer.push({
+                    event: "inarticle_progress",
+                    video_view_percent: "25%",
+                    item_id: content_id_Filter, //video id
+                    item_name: videotitle_Filter, //video title
+                    item_category: item_category_Filter, //category of the article
+                    item_sub_category: item_sub_category_Filter, //sub-category of the article, default = "INDIA"
+                    state: state_Filter, //state which is selected by the user, default = "INDIA"
+                    city: videocity_Filter, //city which is selected by the user, default = "INDIA"
+                    district: videodistrict_Filter, //district of the article, default = "INDIA"
+                    constituency: constituency_Filter, //constituency of the article, default = "INDIA"
+                    app_language: language_Filter, //language selected by the user, default = "ENGLISH"
+                    current_page_url: currentpageurl_Filter //url of the current  // full path? we wil nt get need new
+                  });
+                } else {
+                  window.dataLayer.push({
+                    event: "inarticle_progress",
+                    video_view_percent: "25%",
+                    item_id: content_id_Filter, //video id
+                    item_name: videotitle_Filter, //video title
+                    item_category: item_category_Filter, //category of the article
+                    item_sub_category: item_sub_category_Filter, //sub-category of the article, default = "INDIA"
+                    state: state_Filter, //state which is selected by the user, default = "INDIA"
+                    city: videocity_Filter, //city which is selected by the user, default = "INDIA"
+                    district: videodistrict_Filter, //district of the article, default = "INDIA"
+                    constituency: constituency_Filter, //constituency of the article, default = "INDIA"
+                    app_language: language_Filter, //language selected by the user, default = "ENGLISH"
+                    current_page_url: currentpageurl_Filter //url of the current  // full path? we wil nt get need new
+                  });
+                }
+              } // End
+
+              //ANDROID VIDEO 25% COMPLETED EVENTS START boxbox
+              function logEventTwentyFive(name, params) {
+                // console.log(name + " firebase function fire");
+                if (!name) {
+                  return;
+                }
+                if (window.AnalyticsWebInterface) {
+                  // Call Android interface
+                  window.AnalyticsWebInterface.logEvent(
+                    name,
+                    JSON.stringify(params)
+                  );
+                } else if (
+                  window.webkit &&
+                  window.webkit.messageHandlers &&
+                  window.webkit.messageHandlers.firebase
+                ) {
+                  // Call iOS interface
+                  var message = {
+                    command: "logEvent",
+                    name: name,
+                    parameters: params
+                  };
+                  window.webkit.messageHandlers.firebase.postMessage(message);
+                } else {
+                  // No Android or iOS interface found
+                  // console.log("No native APIs found.");
+                }
+              }
+              logEventTwentyFive("inarticle_progress", {
+                item_id: content_id_Filter,
+                item_name: videotitle_Filter,
+                item_category: item_category_Filter,
+                item_sub_category: item_sub_category_Filter,
+                state: state_Filter,
+                city: videocity_Filter,
+                district: videodistrict_Filter,
+                constituency: constituency_Filter,
+                app_language: language_Filter,
+                video_depth_percent: "25%"
+              });
+              //ANDROID VIDEO 25% COMPLETED EVENTS END
+
+              reached25 = true;
+            } else if (Math.floor(perc) >= 50 && !reached50) {
+              // console.log("50% reached");
+
+              if (content_type_Filter == "vods") {
+                window.dataLayer.push({
+                  event: "vod_progress",
+                  video_view_percent: "50%",
+                  item_id: content_id_Filter, //video id
+                  item_name: videotitle_Filter, //video title
+                  item_category: item_category_Filter, //category of the article
+                  item_sub_category: item_sub_category_Filter, //sub-category of the article, default = "INDIA"
+                  state: state_Filter, //state which is selected by the user, default = "INDIA"
+                  city: videocity_Filter, //city which is selected by the user, default = "INDIA"
+                  district: videodistrict_Filter, //district of the article, default = "INDIA"
+                  constituency: constituency_Filter, //constituency of the article, default = "INDIA"
+                  app_language: language_Filter, //language selected by the user, default = "ENGLISH"
+                  current_page_url: currentpageurl_Filter //url of the current  // full path? we wil nt get need new
+                });
+              } else if (content_type_Filter == "inarticle") {
+                if (
+                  isMsite == "m.staging.etvbharat.com" ||
+                  isMsite == "m.etvbharat.com"
+                ) {
+                  window.dataLayer.push({
+                    event: "inarticle_progress",
+                    video_view_percent: "50%",
+                    item_id: content_id_Filter, //video id
+                    item_name: videotitle_Filter, //video title
+                    item_category: item_category_Filter, //category of the article
+                    item_sub_category: item_sub_category_Filter, //sub-category of the article, default = "INDIA"
+                    state: state_Filter, //state which is selected by the user, default = "INDIA"
+                    city: videocity_Filter, //city which is selected by the user, default = "INDIA"
+                    district: videodistrict_Filter, //district of the article, default = "INDIA"
+                    constituency: constituency_Filter, //constituency of the article, default = "INDIA"
+                    app_language: language_Filter, //language selected by the user, default = "ENGLISH"
+                    current_page_url: currentpageurl_Filter //url of the current  // full path? we wil nt get need new
+                  });
+                } else {
+                  window.dataLayer.push({
+                    event: "inarticle_progress",
+                    video_view_percent: "50%",
+                    item_id: content_id_Filter, //video id
+                    item_name: videotitle_Filter, //video title
+                    item_category: item_category_Filter, //category of the article
+                    item_sub_category: item_sub_category_Filter, //sub-category of the article, default = "INDIA"
+                    state: state_Filter, //state which is selected by the user, default = "INDIA"
+                    city: videocity_Filter, //city which is selected by the user, default = "INDIA"
+                    district: videodistrict_Filter, //district of the article, default = "INDIA"
+                    constituency: constituency_Filter, //constituency of the article, default = "INDIA"
+                    app_language: language_Filter, //language selected by the user, default = "ENGLISH"
+                    current_page_url: currentpageurl_Filter //url of the current  // full path? we wil nt get need new
+                  });
+                }
+              }
+
+              //ANDROID VIDEO 50% COMPLETED EVENTS START
+              function logEventFiftyCompleted(name, params) {
+                // console.log(name + " firebase function fire");
+                if (!name) {
+                  return;
+                }
+                if (window.AnalyticsWebInterface) {
+                  // Call Android interface
+                  window.AnalyticsWebInterface.logEvent(
+                    name,
+                    JSON.stringify(params)
+                  );
+                } else if (
+                  window.webkit &&
+                  window.webkit.messageHandlers &&
+                  window.webkit.messageHandlers.firebase
+                ) {
+                  // Call iOS interface
+                  var message = {
+                    command: "logEvent",
+                    name: name,
+                    parameters: params
+                  };
+                  window.webkit.messageHandlers.firebase.postMessage(message);
+                } else {
+                  // No Android or iOS interface found
+                  // console.log("No native APIs found.");
+                }
+              }
+              logEventFiftyCompleted("inarticle_progress", {
+                item_id: content_id_Filter,
+                item_name: videotitle_Filter,
+                item_category: item_category_Filter,
+                item_sub_category: item_sub_category_Filter,
+                state: state_Filter,
+                city: videocity_Filter,
+                district: videodistrict_Filter,
+                constituency: constituency_Filter,
+                app_language: language_Filter,
+                video_depth_percent: "50%"
+              });
+              //ANDROID VIDEO 50% COMPLETED EVENTS END
+
+              reached50 = true;
+            } else if (Math.floor(perc) >= 75 && !reached75) {
+              // console.log("75% reached");
+
+              if (content_type_Filter == "vods") {
+                window.dataLayer.push({
+                  event: "vod_progress",
+                  video_view_percent: "75%",
+                  item_id: content_id_Filter, //video id
+                  item_name: videotitle_Filter, //video title
+                  item_category: item_category_Filter, //category of the article
+                  item_sub_category: item_sub_category_Filter, //sub-category of the article, default = "INDIA"
+                  state: state_Filter, //state which is selected by the user, default = "INDIA"
+                  city: videocity_Filter, //city which is selected by the user, default = "INDIA"
+                  district: videodistrict_Filter, //district of the article, default = "INDIA"
+                  constituency: constituency_Filter, //constituency of the article, default = "INDIA"
+                  app_language: language_Filter, //language selected by the user, default = "ENGLISH"
+                  current_page_url: currentpageurl_Filter //url of the current  // full path? we wil nt get need new
+                });
+              } else if (content_type_Filter == "inarticle") {
+                if (
+                  isMsite == "m.staging.etvbharat.com" ||
+                  isMsite == "m.etvbharat.com"
+                ) {
+                  window.dataLayer.push({
+                    event: "inarticle_progress",
+                    video_view_percent: "75%",
+                    item_id: content_id_Filter, //video id
+                    item_name: videotitle_Filter, //video title
+                    item_category: item_category_Filter, //category of the article
+                    item_sub_category: item_sub_category_Filter, //sub-category of the article, default = "INDIA"
+                    state: state_Filter, //state which is selected by the user, default = "INDIA"
+                    city: videocity_Filter, //city which is selected by the user, default = "INDIA"
+                    district: videodistrict_Filter, //district of the article, default = "INDIA"
+                    constituency: constituency_Filter, //constituency of the article, default = "INDIA"
+                    app_language: language_Filter, //language selected by the user, default = "ENGLISH"
+                    current_page_url: currentpageurl_Filter //url of the current  // full path? we wil nt get need new
+                  });
+                } else {
+                  window.dataLayer.push({
+                    event: "inarticle_progress",
+                    video_view_percent: "75%",
+                    item_id: content_id_Filter, //video id
+                    item_name: videotitle_Filter, //video title
+                    item_category: item_category_Filter, //category of the article
+                    item_sub_category: item_sub_category_Filter, //sub-category of the article, default = "INDIA"
+                    state: state_Filter, //state which is selected by the user, default = "INDIA"
+                    city: videocity_Filter, //city which is selected by the user, default = "INDIA"
+                    district: videodistrict_Filter, //district of the article, default = "INDIA"
+                    constituency: constituency_Filter, //constituency of the article, default = "INDIA"
+                    app_language: language_Filter, //language selected by the user, default = "ENGLISH"
+                    current_page_url: currentpageurl_Filter //url of the current  // full path? we wil nt get need new
+                  });
+                }
+              }
+
+              //ANDROID VIDEO 75% COMPLETED EVENTS START
+              function logEventSeventyFiveCompleted(name, params) {
+                // console.log(name + " firebase function fire");
+                if (!name) {
+                  return;
+                }
+                if (window.AnalyticsWebInterface) {
+                  // Call Android interface
+                  window.AnalyticsWebInterface.logEvent(
+                    name,
+                    JSON.stringify(params)
+                  );
+                } else if (
+                  window.webkit &&
+                  window.webkit.messageHandlers &&
+                  window.webkit.messageHandlers.firebase
+                ) {
+                  // Call iOS interface
+                  var message = {
+                    command: "logEvent",
+                    name: name,
+                    parameters: params
+                  };
+                  window.webkit.messageHandlers.firebase.postMessage(message);
+                } else {
+                  // No Android or iOS interface found
+                  // console.log("No native APIs found.");
+                }
+              }
+              logEventSeventyFiveCompleted("inarticle_progress", {
+                item_id: content_id_Filter,
+                item_name: videotitle_Filter,
+                item_category: item_category_Filter,
+                item_sub_category: item_sub_category_Filter,
+                state: state_Filter,
+                city: videocity_Filter,
+                district: videodistrict_Filter,
+                constituency: constituency_Filter,
+                app_language: language_Filter,
+                video_depth_percent: "75%"
+              });
+              //ANDROID VIDEO 75% COMPLETED EVENTS END
+              reached75 = true;
+            }
+            //console.log(perc);
+          }
+          // VIDEO COMPILATION END
+
+          var VOD_Short_Ads_durtion;
+          //COMSCORE FUNCTION START  ==========================
+          var streamingAnalytics;
+
+          function comScoreNewInstance() {
+            streamingAnalytics = new ns_.ReducedRequirementsStreamingAnalytics({
+              publisherId: "20416623"
+            });
+            return streamingAnalytics;
+          }
+
+          function VideoReplay(player_status) {
+            var videoPlayStatus = localStorage.getItem("videoPlay");
+            var videoCompleteStatus = localStorage.getItem("videoComplete");
+            var AdsComplteStatus = localStorage.getItem("AdsCompleteStatus");
+            if (player_status == "playing") {
+              if (videoCompleteStatus == "true" && videoPlayStatus == "true") {
+                comScoreNewInstance();
+              } else {
+                comScoreNewInstance();
+              }
+            }
+          } //main end
+          function comscrorePlayStart(metadata) {
+            streamingAnalytics.playVideoContentPart(
+              metadata,
+              ns_.ReducedRequirementsStreamingAnalytics.ContentType
+                .ShortFormOnDemand
+            );
+          }
+
+          function comScoreStop() {
+            // streamingAnalytics.stop();
+          }
+
+          function getAdsDuration(passDuration) {
+            VOD_Short_Ads_durtion = passDuration;
+          }
+
+          function comScoreAdsStart() {
+            var AdsDurationIn = sessionStorage.getItem("isDuration");
+            streamingAnalytics.playVideoAdvertisement(
+              {
+                ns_st_cl: VOD_Short_Ads_durtion * 1000
+                //ads duration in milliseconds
+              },
+              ns_.ReducedRequirementsStreamingAnalytics.AdType
+                .LinearOnDemandMidRoll
+            );
+          }
+          //ADS STATUS
+          function AdsEventCallBacks(imgAdStatu) {
+            if (imgAdStatu == "STARTED") {
+              try {
+                localStorage.setItem("AdsCompleteStatus", true);
+              } catch {
+                console.log("localStorage access denied");
+              }
+              comScoreAdsStart();
+            } else if (imgAdStatu == "COMPLETE") {
+              try {
+                localStorage.setItem("AdsCompleteStatus", false);
+              } catch {
+                console.log("localStorage access denied");
+              }
+              comScoreStop();
+              sessionStorage.clear("isDuration");
+              // hlsPlayer._videoPlayerControls("play");
+            } else if (imgAdStatu == "PAUSE") {
+            } else if (imgAdStatu == "RESUMED") {
+            } else if (imgAdStatu == "LOADED") {
+              comScoreStop();
+            }
+          }
+          //App Backbutton start
+
+          //MSITE USER SCROLL DOWN PLAY/PAUSE START SHORT VIDEO
+          window.addEventListener("message", MsiteVodsPlyPus, false);
+
+          function MsiteVodsPlyPus(e) {
+            if (e.origin == "*") {
+              return;
+            } else {
+              if (e.data == "SPMsiteVodsPlay") {
+                // console.log('Msite Enter 1');
+                playPlayer();
+              } else if (e.data == "SPMsiteVodsPause") {
+                // console.log('Msite leave 2');
+                pausePlayer();
+                msiteSendingDuraitonWhileUserScrollDown();
+              }
+            }
+          }
+          //MSITE USER SCROLL DOWN PLAY/PAUSE END SHORT VIDEO
+
+          //WEBSITE  USER SCROLL DOWN PLAY/PAUSE START SHORT VIDEO
+          window.addEventListener("message", WebsiteVodsPlyPus, false);
+
+          function WebsiteVodsPlyPus(e) {
+            if (e.origin == "*") {
+              return;
+            } else {
+              // console.log(e.data + " SPNewsTimePlay*****");
+              if (e.data == "SPWebSiteVodsPlay") {
+                playPlayer();
+              } else if (e.data == "SPWebSiteVodsPause") {
+                pausePlayer();
+                WebsiteVodsUserScrollDownOrNavigateToAway();
+              }
+            }
+          }
+          //WEBSITE  USER SCROLL DOWN PLAY/PAUSE END SHORT VIDEO
+
+          // COMSCORE VIDEO EVENTS END
+          function createEventCallBacks() {
+            hlsPlayer.eventcallbacks.onPlay = function(
+              presentTime,
+              duration,
+              mediaId
+            ) {
+              player_status = "playing";
+              // console.log("play");
+              if (
+                isMsite == "m.staging.etvbharat.com" ||
+                isMsite == "m.etvbharat.com"
+              ) {
+                if (content_type_Filter == "inarticle") {
+                  // console.log('msite inarticle start');
+                  window.dataLayer.push({
+                    event: "inarticle_start",
+                    item_id: content_id_Filter, //video id
+                    item_name: videotitle_Filter, //video title
+                    item_category: item_category_Filter, //category of the article
+                    item_sub_category: item_sub_category_Filter, //sub-category of the article, default = "INDIA"
+                    state: state_Filter, //state which is selected by the user, default = "INDIA"
+                    city: videocity_Filter, //city which is selected by the user, default = "INDIA"
+                    district: videodistrict_Filter, //district of the article, default = "INDIA"
+                    constituency: constituency_Filter, //constituency of the article, default = "INDIA"
+                    app_language: language_Filter, //language selected by the user, default = "ENGLISH"
+                    current_page_url: currentpageurl_Filter //url of the current  // full path? we wil nt get need new
+                  });
+                }
+              }
+
+              if (content_type_Filter == "vods") {
+                // console.log(currentpageurl_Filter + ' VOD GTM Play Evn VODS-short');
+                // Google GTM 360 start
+                window.dataLayer.push({
+                  event: "vod_start",
+                  item_id: content_id_Filter, //video id
+                  item_name: videotitle_Filter, //video title
+                  item_category: item_category_Filter, //category of the article
+                  item_sub_category: item_sub_category_Filter, //sub-category of the article, default = "INDIA"
+                  state: state_Filter, //state which is selected by the user, default = "INDIA"
+                  city: videocity_Filter, //city which is selected by the user, default = "INDIA"
+                  district: videodistrict_Filter, //district of the article, default = "INDIA"
+                  constituency: constituency_Filter, //constituency of the article, default = "INDIA"
+                  app_language: language_Filter, //language selected by the user, default = "ENGLISH"
+                  current_page_url: currentpageurl_Filter //url of the current  // full path? we wil nt get need new params
+                });
+                // Google GTM 360 End
+              }
+
+              if (player_status == "playing") {
+                var getDurationsesf = getTotalDuration();
+              }
+              // TRACKING TRUE FIRE GA EVENT START
+              var GA_Event_Start = checkVideoStatusVODelseLive(GA_TRACK_START);
+              if (GA_Event_Start == "true") {
+              }
+              // TRACKING TRUE FIRE GA EVENT END
+              try {
+                localStorage.setItem("videoPlay", true);
+              } catch {
+                console.log("localStorage access denied");
+              }
+              setTimeout(function() {
+                localStorage.removeItem("videoPlay");
+                localStorage.removeItem("videoComplete");
+              }, 2000);
+              VideoReplay(player_status);
+              var metadata = {
+                c2: 20416623,
+                c3: comscorec3Filter,
+                c4: "*null",
+                c6: "*null",
+                ns_st_ci: 13784,
+                ns_st_cl: VOD_Final_Duration * 1000,
+                ns_st_pu: "etv news",
+                ns_st_pr: "article video",
+                ns_st_tpr: 53617155,
+                ns_st_ep: "Bulletin",
+                ns_st_tep: 53617155,
+                ns_st_ge: "news",
+                ns_st_st: "ETV Bharat",
+                ns_st_ce: 1,
+                ns_st_ia: "*null",
+                ns_st_ddt: "*null",
+                ns_st_tdt: "*null"
+              };
+              comscrorePlayStart(metadata);
+
+              //Android Firebase video play start
+              function logEvent(name, params) {
+                if (!name) {
+                  return;
+                }
+                if (window.AnalyticsWebInterface) {
+                  // Call Android interface
+                  window.AnalyticsWebInterface.logEvent(
+                    name,
+                    JSON.stringify(params)
+                  );
+                } else if (
+                  window.webkit &&
+                  window.webkit.messageHandlers &&
+                  window.webkit.messageHandlers.firebase
+                ) {
+                  // Call iOS interface
+                  var message = {
+                    command: "logEvent",
+                    name: name,
+                    parameters: params
+                  };
+                  window.webkit.messageHandlers.firebase.postMessage(message);
+                } else {
+                  // No Android or iOS interface found
+                  //console.log("No native APIs found.");
+                }
+              }
+              logEvent("inarticle_start", {
+                item_id: content_id_Filter,
+                item_name: videotitle_Filter,
+                item_category: item_category_Filter,
+                item_sub_category: item_sub_category_Filter,
+                state: state_Filter,
+                city: videocity_Filter,
+                district: videodistrict_Filter,
+                constituency: constituency_Filter,
+                app_language: language_Filter
+              });
+              //Android Firebase video play end
+            };
+
+            hlsPlayer.eventcallbacks.onPause = function(
+              presentTime,
+              duration,
+              mediaId
+            ) {
+              player_status = "pause";
+
+              var itspresentTime = parseInt(presentTime);
+              var finevlauecheck = itspresentTime.toString();
+              // Short Video start
+              function msiteSendingDuraitonWhileUserScrollDown() {
+                window.dataLayer.push({
+                  event: "vod_durationMsiteVodsScrollDown",
+                  item_id: content_id_Filter, //video id
+                  item_name: videotitle_Filter, //video title
+                  item_category: item_category_Filter, //category of the article
+                  item_sub_category: item_sub_category_Filter, //sub-category of the article, default = "INDIA"
+                  state: state_Filter, //state which is selected by the user, default = "INDIA"
+                  city: videocity_Filter, //city which is selected by the user, default = "INDIA"
+                  district: videodistrict_Filter, //district of the article, default = "INDIA"
+                  constituency: constituency_Filter, //constituency of the article, default = "INDIA"
+                  app_language: language_Filter, //language selected by the user, default = "ENGLISH"
+                  current_page_url: currentpageurl_Filter, //url of the current  // full path? we wil nt get need
+                  duration: parseInt(presentTime)
+                });
+              }
+
+              function WebsiteVodsUserScrollDownOrNavigateToAway() {
+                window.dataLayer.push({
+                  event: "newstime_durationUserNavigate",
+                  item_id: content_id_Filter, //video id
+                  item_name: videotitle_Filter, //video title
+                  item_category: item_category_Filter, //category of the article
+                  item_sub_category: item_sub_category_Filter, //sub-category of the article, default = "INDIA"
+                  state: state_Filter, //state which is selected by the user, default = "INDIA"
+                  city: videocity_Filter, //city which is selected by the user, default = "INDIA"
+                  district: videodistrict_Filter, //district of the article, default = "INDIA"
+                  constituency: constituency_Filter, //constituency of the article, default = "INDIA"
+                  app_language: language_Filter, //language selected by the user, default = "ENGLISH"
+                  current_page_url: currentpageurl_Filter, //url of the current  // full path? we wil nt get need new
+                  duration: parseInt(presentTime)
+                });
+              }
+              // Short Video end
+
+              VideoReplay(player_status);
+              comScoreStop();
+
+              //ANDROID BACK BUTTON START
+              if (androidPostPause == true) {
+                function androidbackbuttonEvntPass() {
+                  //Android In-Article start
+                  function logEventInarticle_Duration(name, params) {
+                    if (!name) {
+                      return;
+                    }
+                    if (window.AnalyticsWebInterface) {
+                      // Call Android interface
+                      window.AnalyticsWebInterface.logEvent(
+                        name,
+                        JSON.stringify(params)
+                      );
+                    } else if (
+                      window.webkit &&
+                      window.webkit.messageHandlers &&
+                      window.webkit.messageHandlers.firebase
+                    ) {
+                      // Call iOS interface
+                      var message = {
+                        command: "logEvent",
+                        name: name,
+                        parameters: params
+                      };
+                      window.webkit.messageHandlers.firebase.postMessage(
+                        message
+                      );
+                    } else {
+                      // No Android or iOS interface found
+                      //console.log("No native APIs found.");
+                    }
+                  }
+                  logEventInarticle_Duration("inarticle_duration", {
+                    item_id: content_id_Filter,
+                    item_name: videotitle_Filter,
+                    item_category: item_category_Filter,
+                    item_sub_category: item_sub_category_Filter,
+                    state: state_Filter,
+                    city: videocity_Filter,
+                    district: videodistrict_Filter,
+                    constituency: constituency_Filter,
+                    app_language: language_Filter,
+                    duration: itspresentTime
+                  });
+                  //Android In-Article inarticle_duration End
+                }
+                androidbackbuttonEvntPass();
+                androidPostPause = false;
+              }
+              //ANDROID BACK BUTTON END
+            }; // PAUSE END
+
+            hlsPlayer.eventcallbacks.onResume = function(
+              presentTime,
+              duration,
+              mediaId
+            ) {
+              player_status = "onResume";
+              // console.log("onResume");
+
+              VideoReplay(player_status);
+              var metadata = {
+                c2: 20416623,
+                c3: comscorec3Filter,
+                c4: "*null",
+                c6: "*null",
+                ns_st_ci: 13784,
+                ns_st_cl: VOD_Final_Duration * 1000,
+                ns_st_pu: "etv news",
+                ns_st_pr: "article video",
+                ns_st_tpr: 53617155,
+                ns_st_ep: "Bulletin",
+                ns_st_tep: 53617155,
+                ns_st_ge: "news",
+                ns_st_st: "ETV Bharat",
+                ns_st_ce: 1,
+                ns_st_ia: "*null",
+                ns_st_ddt: "*null",
+                ns_st_tdt: "*null"
+              };
+              comscrorePlayStart(metadata);
+            };
+
+            hlsPlayer.eventcallbacks.onComplete = function(
+              presentTime,
+              duration,
+              mediaId
+            ) {
+              player_status = "complete";
+              // console.log("video complete");
+
+              // console.log(VideoTimerCount + " TimeCounting 2");
+              // Video Time Manually Stop if video is completed
+              VideoTimerManuallyStopFunction();
+              // Video Time Manually Stop if video is end
+
+              setTimeout(function() {
+                function logEventInarticle_complete(name, params) {
+                  if (!name) {
+                    return;
+                  }
+                  if (window.AnalyticsWebInterface) {
+                    // Call Android interface
+                    window.AnalyticsWebInterface.logEvent(
+                      name,
+                      JSON.stringify(params)
+                    );
+                  } else if (
+                    window.webkit &&
+                    window.webkit.messageHandlers &&
+                    window.webkit.messageHandlers.firebase
+                  ) {
+                    // Call iOS interface
+                    var message = {
+                      command: "logEvent",
+                      name: name,
+                      parameters: params
+                    };
+                    window.webkit.messageHandlers.firebase.postMessage(message);
+                  } else {
+                    // No Android or iOS interface found
+                    //console.log("No native APIs found.");
+                  }
+                }
+                logEventInarticle_complete("inarticle_complete", {
+                  item_id: content_id_Filter,
+                  item_name: videotitle_Filter,
+                  item_category: item_category_Filter,
+                  item_sub_category: item_sub_category_Filter,
+                  state: state_Filter,
+                  city: videocity_Filter,
+                  district: videodistrict_Filter,
+                  constituency: constituency_Filter,
+                  app_language: language_Filter
+                });
+              }, 100);
+
+              //Android In-Article start
+              function logEventInarticle_Duration(name, params) {
+                if (!name) {
+                  return;
+                }
+                if (window.AnalyticsWebInterface) {
+                  // Call Android interface
+                  window.AnalyticsWebInterface.logEvent(
+                    name,
+                    JSON.stringify(params)
+                  );
+                } else if (
+                  window.webkit &&
+                  window.webkit.messageHandlers &&
+                  window.webkit.messageHandlers.firebase
+                ) {
+                  // Call iOS interface
+                  var message = {
+                    command: "logEvent",
+                    name: name,
+                    parameters: params
+                  };
+                  window.webkit.messageHandlers.firebase.postMessage(message);
+                } else {
+                  // No Android or iOS interface found
+                  //console.log("No native APIs found.");
+                }
+              }
+
+              logEventInarticle_Duration("inarticle_duration", {
+                item_id: content_id_Filter,
+                item_name: videotitle_Filter,
+                item_category: item_category_Filter,
+                item_sub_category: item_sub_category_Filter,
+                state: state_Filter,
+                city: videocity_Filter,
+                district: videodistrict_Filter,
+                constituency: constituency_Filter,
+                app_language: language_Filter,
+                duration: parseInt(presentTime)
+              });
+              //Android In-Article inarticle_duration End
+
+              if (content_type_Filter == "vods") {
+                // Google GTM 360 start
+                //vod_complete
+                window.dataLayer.push({
+                  event: "vod_complete",
+                  item_id: content_id_Filter, //video id
+                  item_name: videotitle_Filter, //video title
+                  item_category: item_category_Filter, //category of the article
+                  item_sub_category: item_sub_category_Filter, //sub-category of the article, default = "INDIA"
+                  state: state_Filter, //state which is selected by the user, default = "INDIA"
+                  city: videocity_Filter, //city which is selected by the user, default = "INDIA"
+                  district: videodistrict_Filter, //district of the article, default = "INDIA"
+                  constituency: constituency_Filter, //constituency of the article, default = "INDIA"
+                  app_language: language_Filter, //language selected by the user, default = "ENGLISH"
+                  current_page_url: currentpageurl_Filter //url of the current  // full path? we wil nt get need new params
+                });
+
+                //vod_duration
+                window.dataLayer.push({
+                  event: "vod_duration",
+                  item_id: content_id_Filter, //video id
+                  item_name: videotitle_Filter, //video title
+                  item_category: item_category_Filter, //category of the article
+                  item_sub_category: item_sub_category_Filter, //sub-category of the article, default = "INDIA"
+                  state: state_Filter, //state which is selected by the user, default = "INDIA"
+                  city: videocity_Filter, //city which is selected by the user, default = "INDIA"
+                  district: videodistrict_Filter, //district of the article, default = "INDIA"
+                  constituency: constituency_Filter, //constituency of the article, default = "INDIA"
+                  app_language: language_Filter, //language selected by the user, default = "ENGLISH"
+                  current_page_url: currentpageurl_Filter, //url of the current  // full path? we wil nt get need
+                  duration: parseInt(presentTime)
+                });
+                // Google GTM 360 End
+              } else if (content_type_Filter == "inarticle") {
+                // console.log('its inarticle VODS-short');
+                // Google GTM 360 start
+                // console.log(VideoTimerCount + " complete TimeCounting3");
+                // inarticle_complete
+                window.dataLayer.push({
+                  event: "inarticle_complete",
+                  item_id: content_id_Filter, //video id
+                  item_name: videotitle_Filter, //video title
+                  item_category: item_category_Filter, //category of the article
+                  item_sub_category: item_sub_category_Filter, //sub-category of the article, default = "INDIA"
+                  state: state_Filter, //state which is selected by the user, default = "INDIA"
+                  city: videocity_Filter, //city which is selected by the user, default = "INDIA"
+                  district: videodistrict_Filter, //district of the article, default = "INDIA"
+                  constituency: constituency_Filter, //constituency of the article, default = "INDIA"
+                  app_language: language_Filter, //language selected by the user, default = "ENGLISH"
+                  current_page_url: currentpageurl_Filter //url of the current  // full path? we wil nt get need new params
+                });
+
+                // inarticle_duration raghu 2
+                window.dataLayer.push({
+                  event: "inarticle_duration",
+                  item_id: content_id_Filter, //video id
+                  item_name: videotitle_Filter, //video title
+                  item_category: item_category_Filter, //category of the article
+                  item_sub_category: item_sub_category_Filter, //sub-category of the article, default = "INDIA"
+                  state: state_Filter, //state which is selected by the user, default = "INDIA"
+                  city: videocity_Filter, //city which is selected by the user, default = "INDIA"
+                  district: videodistrict_Filter, //district of the article, default = "INDIA"
+                  constituency: constituency_Filter, //constituency of the article, default = "INDIA"
+                  app_language: language_Filter, //language selected by the user, default = "ENGLISH"
+                  current_page_url: currentpageurl_Filter, //url of the current  // full path? we wil nt get need
+                  duration: VideoTimerCount
+                });
+                // Google GTM 360 End
+              }
+
+              // TRACKING TRUE FIRE GA EVENT START
+              var GA_Event_Start = checkVideoStatusVODelseLive(GA_TRACK_START);
+              if (GA_Event_Start == "true") {
+              }
+              // TRACKING TRUE FIRE GA EVENT END
+              try {
+                localStorage.setItem("videoComplete", true);
+              } catch {
+                console.log("localStorage access denied");
+              }
+              //localStorage.setItem("videoPlay", false);
+              VideoReplay(player_status);
+              //REMOVE DURATION ONCE COMPLETEDdd
+              localStorage.removeItem("embedPlayerDuration");
+              comScoreStop();
+              //Firebase video completed end
+            };
+
+            hlsPlayer.eventcallbacks.onSeeked = function(
+              presentTime,
+              duration,
+              mediaId
+            ) {
+              player_status = "seeked";
+              // console.log(" seeked");
+              VideoReplay(player_status);
+            };
+
+            var IsUnmutedOnlyTime = false;
+            var InarticleFirstTimeFireGTMOnUnmute = false;
+
+            // raghu
+            hlsPlayer.eventcallbacks.onMutedUnmuted = function(
+              MutedOrUnmuted,
+              presentTime,
+              duration,
+              mediaId
+            ) {
+              StartVideoTimerTriger();
+
+              if (MutedOrUnmuted) {
+                // console.log("Mute 1 ");
+              } else {
+                // console.log("UnMute 2");
+                if (!IsUnmutedOnlyTime) {
+                  if (!InarticleFirstTimeFireGTMOnUnmute) {
+                    if (content_type_Filter == "inarticle") {
+                      // Google GTM 360 start
+                      // console.log('Inarticle Video unmuted GTM Fire VODS-short');
+                      window.dataLayer.push({
+                        event: "inarticle_start",
+                        item_id: content_id_Filter, //video id
+                        item_name: videotitle_Filter, //video title
+                        item_category: item_category_Filter, //category of the article
+                        item_sub_category: item_sub_category_Filter, //sub-category of the article, default = "INDIA"
+                        state: state_Filter, //state which is selected by the user, default = "INDIA"
+                        city: videocity_Filter, //city which is selected by the user, default = "INDIA"
+                        district: videodistrict_Filter, //district of the article, default = "INDIA"
+                        constituency: constituency_Filter, //constituency of the article, default = "INDIA"
+                        app_language: language_Filter, //language selected by the user, default = "ENGLISH"
+                        current_page_url: currentpageurl_Filter //url of the current  // full path? we wil nt get need new params
+                      });
+                    }
+                    InarticleFirstTimeFireGTMOnUnmute = true;
+                  }
+                }
+              }
+            };
+          } // callback Event d End
+          //COMSCORE FUNCTION ENDd ==========================
+        }
+      } else if (VOD_OR_LIVE == "livestream" || VOD_OR_LIVE == "livesteam") {
+        // console.log("its LiveEvent ");
+
+        //GTM Events Data start
+        var contenturl = location.href;
+        var res = contenturl.split("contenturl=");
+
+        var videotitle,
+          currentpageurl,
+          videocity,
+          videodistrict,
+          constituency,
+          content_id,
+          item_category,
+          item_sub_category,
+          content_type,
+          language,
+          state;
+        var videotitle_Filter,
+          currentpageurl_Filter,
+          videocity_Filter,
+          videodistrict_Filter,
+          constituency_Filter,
+          content_id_Filter,
+          item_category_Filter,
+          item_sub_category_Filter,
+          content_type_Filter,
+          language_Filter,
+          state_Filter;
+
+        // videotitle start
+        videotitle = res[1].split("&videotitle=")[1];
+        if (videotitle != undefined) {
+          videotitle_Filter = decodeURI(videotitle.split("&")[0]);
+          //console.log(videotitle_Filter + " VODS-short videotitle 1");
+        }
+        // videotitle end
+
+        // currentpageurl start
+        currentpageurl = res[1].split("&currentpageurl=")[1];
+        if (currentpageurl != undefined) {
+          currentpageurl_Filter = currentpageurl.split("&")[0];
+        }
+        // currentpageurl end
+
+        // videocity start
+        videocity = res[1].split("&videocity=")[1];
+        if (videocity != undefined) {
+          videocity_Filter = videocity.split("&")[0];
+          //console.log(videocity_Filter + " VODS-short videocity 3");
+        }
+        // videocity end
+
+        // videodistrict start
+        videodistrict = res[1].split("&videodistrict=")[1];
+        if (videodistrict != undefined) {
+          videodistrict_Filter = videodistrict.split("&")[0];
+          //console.log(videodistrict_Filter + " VODS-short videodistrict 4");
+        }
+        // videodistrict end
+
+        // constituency start
+        constituency = res[1].split("&constituency=")[1];
+        if (constituency != undefined) {
+          constituency_Filter = constituency.split("&")[0];
+          //console.log(constituency_Filter + " VODS-short constituency 5");
+        }
+        // constituency end
+
+        // content_id start
+        content_id = res[1].split("&content_id=")[1];
+        if (content_id != undefined) {
+          content_id_Filter = content_id.split("&")[0];
+          //console.log(content_id_Filter + " VODS-short content_id 6");
+        }
+        // content_id end
+
+        // item_category start
+        item_category = res[1].split("&category=")[1];
+        if (item_category != undefined) {
+          item_category_Filter = item_category.split("&")[0];
+          //console.log(item_category_Filter + " VODS-short item_category 7");
+        } else {
+          item_category_Filter = "INDIA";
+          //console.log(item_category_Filter + " Error VODS-short item_category 7");
+        }
+        // item_category end
+
+        // item_sub_category start
+        item_sub_category = res[1].split("&subcategory=")[1];
+        if (item_sub_category != undefined) {
+          item_sub_category_Filter = item_sub_category.split("&")[0];
+          //console.log(item_sub_category_Filter + " VODS-short item_sub_category_Filter 8");
+        } else {
+          item_sub_category_Filter = "INDIA";
+          //console.log(item_sub_category_Filter + " Error VODS-short item_sub_category_Filter 8");
+        }
+        // item_sub_category end
+
+        // content_type start
+        content_type = res[1].split("&content_type=")[1];
+        if (content_type != undefined) {
+          content_type_Filter = content_type.split("&")[0];
+          //console.log(content_type_Filter + " VODS-short content_type 9");
+        }
+        // videotitle end
+
+        // language start
+        language = res[1].split("&language=")[1];
+        if (language != undefined) {
+          language_Filter = language.split("&")[0];
+          //console.log(language_Filter + " VODS-short language 10");
+        }
+        // language end
+
+        // state start
+        state = res[1].split("&stateName=")[1];
+        if (state != undefined) {
+          state_Filter = state.split("&")[0];
+          //console.log(state_Filter + " VODS-short language 11");
+        }
+        // language end
+
+        //GTM Events Data end
+
+        var SendingDurationLvnt;
+
+        //keep it else u will die
+        function saranyCurrentVideoDuration() {}
+
+        function createEventCallBacks() {
+          hlsPlayer.eventcallbacks.onPlay = function(
+            presentTime,
+            duration,
+            mediaId
+          ) {};
+          hlsPlayer.eventcallbacks.onPause = function(
+            presentTime,
+            duration,
+            mediaId
+          ) {
+            parseInt(SendingDurationLvnt) = presentTime;
+            function WebsiteLiveEventUserScrollDownOrNavigateToAway() {
+              window.dataLayer.push({
+                event: "liveevent_durationLiveEvent",
+                item_id: content_id_Filter,
+                item_name: videotitle_Filter,
+                item_category: item_category_Filter,
+                item_sub_category: item_sub_category_Filter,
+                state: state_Filter,
+                city: videocity_Filter,
+                district: videodistrict_Filter,
+                constituency: constituency_Filter,
+                app_language: language_Filter,
+                current_page_url: currentpageurl_Filter,
+                duration: parseInt(presentTime)
+              });
+            }
+
+            if (VOD_OR_LIVE == "livestream" || VOD_OR_LIVE == "livesteam") {
+              window.dataLayer.push({
+                event: "liveevent_duration",
+                item_id: content_id_Filter,
+                item_name: videotitle_Filter,
+                item_category: item_category_Filter,
+                item_sub_category: item_sub_category_Filter,
+                state: state_Filter,
+                city: videocity_Filter,
+                district: videodistrict_Filter,
+                constituency: constituency_Filter,
+                app_language: language_Filter,
+                current_page_url: currentpageurl_Filter,
+                duration: parseInt(presentTime)
+              });
+            }
+          };
+
+          var IsUnmutedOnlyTime = false;
+          hlsPlayer.eventcallbacks.onMutedUnmuted = function(
+            MutedOrUnmuted,
+            presentTime,
+            duration,
+            mediaId
+          ) {
+            if (MutedOrUnmuted) {
+              // console.log("livestream Mute");
+            } else {
+              // console.log("livestream UnMute");
+              if (!IsUnmutedOnlyTime) {
+                function LiveNewsSendGTMValueOnUnmuted(duration) {
+                  // Google GTM 360 start
+                  window.dataLayer.push({
+                    event: "liveevent_start",
+                    item_id: content_id_Filter,
+                    item_name: videotitle_Filter,
+                    item_category: item_category_Filter,
+                    item_sub_category: item_sub_category_Filter,
+                    state: state_Filter,
+                    city: videocity_Filter,
+                    district: videodistrict_Filter,
+                    constituency: constituency_Filter,
+                    app_language: language_Filter,
+                    current_page_url: currentpageurl_Filter
+                  });
+                  // Google GTM 360 Endj
+                  IsUnmutedOnlyTime = true;
+                }
+                LiveNewsSendGTMValueOnUnmuted();
+              }
+            }
+          };
+
+          hlsPlayer.eventcallbacks.onResume = function(
+            presentTime,
+            duration,
+            mediaId
+          ) {
+            // console.log("livestream onResume");
+          };
+
+          hlsPlayer.eventcallbacks.onComplete = function(
+            presentTime,
+            duration,
+            mediaId
+          ) {
+            // console.log("livestream complete");
+          };
+
+          hlsPlayer.eventcallbacks.onSeeked = function(
+            presentTime,
+            duration,
+            mediaId
+          ) {
+            // console.log("livestream seeked");
+          };
+        }
+
+        //WEBSITE  USER SCROLL DOWN PLAY/PAUSE START LIVE EVENT VIDEO
+        window.addEventListener("message", WebsiteLiveEventPlyPus, false);
+
+        function WebsiteLiveEventPlyPus(e) {
+          if (e.origin == "*") {
+            return;
+          } else {
+            if (e.data == "SPWebSiteLiveEventPlay") {
+              playPlayer();
+            } else if (e.data == "SPWebSiteLiveEventPause") {
+              pausePlayer();
+              setTimeout(() => {}, 900);
+            }
+          }
+        }
+      }
+    </script>
+    <script>
+      if (window.top.location.href.indexOf("/amp") > -1) {
+        (window.AmpVideoIframe = window.AmpVideoIframe || []).push(
+          onAmpIntegrationReady
+        );
+        var videoElement = document.querySelector("#video_player");
+        var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        var isSafari = /^((?!chrome|android).)*safari/i.test(
+          navigator.userAgent
+        );
+
+        /*  setTimeout(() => {
+          $("#video_player").click();
+          try {
+            if (isSafari && isMobile) {
+              videoElement.play();
+            } else {
+              hlsPlayer._videoPlayerControls("play");
+            }
+          } catch (i) {
+            console.log(i);
+          }
+        }, 2000); */
+        function onAmpIntegrationReady(ampIntegration) {
+          ampIntegration.postEvent("canplay");
+
+          ampIntegration.method("play", function() {
+            try {
+              if (isSafari && isMobile) {
+                videoElement.play();
+              } else {
+                hlsPlayer._videoPlayerControls("play");
+              }
+            } catch (i) {
+              console.log(i);
+            }
+          });
+          ampIntegration.method("pause", function() {
+            try {
+              if (isSafari && isMobile) {
+                videoElement.pause();
+              } else {
+                hlsPlayer._videoPlayerControls("pause");
+              }
+            } catch (i) {
+              console.log(i);
+            }
+          });
+          ampIntegration.method("mute", function() {
+            try {
+              if (isSafari && isMobile) {
+                videoElement.muted = true;
+              } else {
+                hlsPlayer._videoPlayerControls("mute");
+              }
+            } catch (i) {
+              console.log(i);
+            }
+          });
+          ampIntegration.method("unmute", function() {
+            try {
+              if (isSafari && isMobile) {
+                videoElement.muted = false;
+              } else {
+                hlsPlayer._videoPlayerControls("unmute");
+              }
+            } catch (i) {
+              console.log(i);
+            }
+          });
+        }
+      }
+    </script>
+  </body>
+</html>
